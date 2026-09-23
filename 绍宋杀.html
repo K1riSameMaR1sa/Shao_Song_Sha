@@ -280,7 +280,8 @@ body::before{
     <p>· <b>战场牌</b>：尧山/陕州/淮河/长社/南阳可抽到可装备，据守即得地利（伤害增减、摸牌、回血、免伤等）。</p>
     <p>· <b>和议/主战</b>：和议令各方弃一摸一；主战弃任意牌、每弃一摸一，同阵营额外摸一。</p>
     <p>· <b>死节诏</b>：忠臣殉国后主公解锁限定技——弃所有牌，宋军各摸2牌、本回合出斩不限次。</p>
-    <p>· <b>五军联动</b>：同阵营有其他存活武将时，手牌上限+1（固定不叠加）；同袍阵亡时其他同袍摸1牌继承遗志。</p>
+    <p>· <b>五军联动</b>：同阵营（宋/金/西夏/大理）有其他存活武将时，手牌上限+1（固定不叠加）；同袍阵亡时其他同袍摸1牌继承遗志。</p>
+    <p>· <b>身份与阵营解耦</b>：16名武将均可被分配任意身份——宋将可能是反贼，金将也可能是忠臣，暗身份才是真正的敌我识别。</p>
     <p>· <b>先知</b>：赵玖每回合窥看下家一张手牌。</p>
     <p style="margin-top:10px;"><b>四方势力</b>：</p>
     <p>· <b style="color:var(--xixia-light)">西夏</b>：铁鹞子（装备战马伤害+1、距离+1）、河西马场（自动装备战马）。</p>
@@ -578,7 +579,6 @@ function renderPickGrid(){
   HEROES.filter(h=>!pickedIds.includes(h.id)).forEach(h=>{
     const div = document.createElement("div");
     div.className = "hero-card " + h.faction;
-    if(h.id==="zhaojiu") div.classList.add("lord");
     div.dataset.heroId = h.id;
     div.innerHTML = `
       <div class="hero-name">${h.name}</div>
@@ -983,9 +983,8 @@ function playCard(cardUid){
     p.hand = [];
     toDiscard.forEach(c=>G.discard.push(c));
     let n = toDiscard.length;
-    // 主公或同阵营（忠臣）额外摸1张
-    const lord = G.players.find(pl=>pl.role==="lord");
-    if(p.role==="lord" || (lord && !lord.dead && p.faction===lord.faction)){
+    // 主公或忠臣（同身份阵营）额外摸1张
+    if(p.role==="lord" || p.role==="loyalist"){
       n += 1;
       log("me", "【主战】同仇敌忾，你额外摸1张");
     }
@@ -1335,7 +1334,7 @@ function killPlayer(target, sourceIdx){
   const lord = G.players.find(p=>p.role==="lord" && !p.dead);
   if(target.role==="loyalist" && lord && !lord.martyrUnlocked){
     lord.martyrUnlocked = true;
-    log("system", `【死节】忠臣${target.hero.name}殉国！主公${lord.hero.name}解锁限定技【死节诏】——出牌阶段可弃所有牌，令宋军各摸2牌、本回合出斩不限次`);
+    log("system", `【死节】忠臣${target.hero.name}殉国！主公${lord.hero.name}解锁限定技【死节诏】——出牌阶段可弃所有牌，令忠臣各摸2牌、本回合出斩不限次`);
   }
   // 【同袍遗志】同阵营其他存活武将各摸1牌
   G.players.forEach(pl=>{
@@ -1607,8 +1606,7 @@ function aiPlay(p){
       p.hand = [];
       oldHand.forEach(c=>G.discard.push(c));
       let n = oldHand.length;
-      const lord = G.players.find(pl=>pl.role==="lord");
-      if(p.role==="lord" || (lord && !lord.dead && p.faction===lord.faction)) n+=1;
+      if(p.role==="lord" || p.role==="loyalist") n+=1;
       p.hand.push(...drawCards(n));
       log("system", `【${p.hero.name}】使用【主战】，弃${oldHand.length}摸${n}`);
       render();
@@ -1797,14 +1795,14 @@ function render(){
         // 弃所有牌
         me.hand.forEach(c=>G.discard.push(c));
         me.hand = [];
-        // 宋军摸2牌
+        // 忠臣各摸2牌（身份同阵营）
         G.players.forEach(pl=>{
-          if(!pl.dead && pl.faction==="song"){
+          if(!pl.dead && pl.role==="loyalist"){
             pl.hand.push(...drawCards(2));
           }
         });
         G.slashUsed = -99; // 本回合出斩不限次
-        log("me", "【死节诏】！忠臣血未冷——你弃所有牌，宋军各摸2牌，本回合出斩不限次！");
+        log("me", "【死节诏】！忠臣血未冷——你弃所有牌，忠臣各摸2牌，本回合出斩不限次！");
         render();
       };
       bar.appendChild(btnM);
