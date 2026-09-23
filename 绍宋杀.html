@@ -277,12 +277,12 @@ body::before{
     <p>· <b style="color:var(--jin-light)">反贼</b>（金）：弑杀赵玖，覆我大宋。</p>
     <p>· <b style="color:var(--neutral-light)">内奸</b>（主和派）：螳螂捕蝉，最后独存。</p>
     <p style="margin-top:10px;"><b>绍宋特色</b>：</p>
-    <p>· <b>战场牌</b>：尧山/陕州/淮河/长社/南阳可抽到可装备，据守即得地利（伤害增减、摸牌、回血、免伤等）。</p>
-    <p>· <b>和议/主战</b>：和议令各方弃一摸一；主战弃任意牌、每弃一摸一，同阵营额外摸一。</p>
-    <p>· <b>死节诏</b>：忠臣殉国后主公解锁限定技——弃所有牌，宋军各摸2牌、本回合出斩不限次。</p>
-    <p>· <b>五军联动</b>：同阵营（宋/金/西夏/大理）有其他存活武将时，手牌上限+1（固定不叠加）；同袍阵亡时其他同袍摸1牌继承遗志。</p>
+    <p>· <b>花色系统</b>：♠宋 ♥大理 ♣西夏 ♦金。每张牌随机配花色点数（A-K），武将有固定花色。</p>
+    <p>· <b>战场牌</b>：尧山/陕州/淮河/长社/南阳可抽到可装备，据守即得地利。</p>
+    <p>· <b>和议/主战</b>：和议令各方弃一摸一；主战弃任意牌，每弃一张与自己武将同花色的牌额外多摸一张。</p>
+    <p>· <b>死节诏</b>：忠臣殉国后主公解锁限定技——弃所有牌，所有与主公同花色的存活武将各摸2牌。</p>
+    <p>· <b>花色共鸣</b>：同花色有其他存活武将时手牌上限+1；同花色武将阵亡时，其余同袍摸1牌继承遗志。</p>
     <p>· <b>身份与阵营解耦</b>：16名武将均可被分配任意身份——宋将可能是反贼，金将也可能是忠臣，暗身份才是真正的敌我识别。</p>
-    <p>· <b>先知</b>：赵玖每回合窥看下家一张手牌。</p>
     <p style="margin-top:10px;"><b>四方势力</b>：</p>
     <p>· <b style="color:var(--xixia-light)">西夏</b>：铁鹞子（装备战马伤害+1、距离+1）、河西马场（自动装备战马）。</p>
     <p>· <b style="color:var(--dali-light)">大理</b>：佛国（每回合回血、免疫火烧）、巫蛊（诅咒他人出斩伤害-1）、茶马古道（用粮额外摸牌）。</p>
@@ -390,62 +390,62 @@ const BATTLEFIELDS = [
    游戏数据：武将（带军种字段，供五军联动）
    ================================================================ */
 const HEROES = [
-  // 宋军忠臣蓝
-  {id:"zhaojiu", name:"赵玖", title:"宋高宗 · 穿越者", hp:4, faction:"song", jun:"御营",
+  // 宋军忠臣蓝（♠黑桃）
+  {id:"zhaojiu", name:"赵玖", title:"宋高宗 · 穿越者", hp:4, faction:"song", suit:"spade", jun:"御营",
    skill:{name:"亲征", desc:"出牌阶段，你可将一张【斩】当【决斗】使用。",
      use:(ctx)=>{ ctx.zhuanzheng=true; }},
    skill2:{name:"先知", desc:"摸牌阶段多摸一张牌；你的回合开始时，可窥看下家一张手牌。", drawBonus:1, peekNext:true},
-   skill3:{name:"死节诏", desc:"【限定技】忠臣阵亡后解锁：出牌阶段可弃所有牌，令每名存活宋军摸2牌、本回合出斩不限次。", oncePerGame:true}},
-  {id:"yuefei", name:"岳飞", title:"御营前军都统制", hp:4, faction:"song", jun:"前军",
+   skill3:{name:"死节诏", desc:"【限定技】忠臣阵亡后解锁：出牌阶段可弃所有牌，令所有与你同花色的存活武将摸2牌、本回合出斩不限次。", oncePerGame:true}},
+  {id:"yuefei", name:"岳飞", title:"御营前军都统制", hp:4, faction:"song", suit:"spade", jun:"前军",
    skill:{name:"尽忠", desc:"你可将任意手牌当【避】打出。", useAs:{"han":true}}},
-  {id:"hanzhong", name:"韩世忠", title:"御营左军都统制 · 延安郡王", hp:4, faction:"song", jun:"左军",
+  {id:"hanzhong", name:"韩世忠", title:"御营左军都统制 · 延安郡王", hp:4, faction:"song", suit:"spade", jun:"左军",
    skill:{name:"风帆", desc:"每回合限一次，你受到【斩】伤害时可弃一张牌抵消之。",
      armorOnce:true}},
-  {id:"liyanxian", name:"李彦仙", title:"陕州镇抚使", hp:4, faction:"song", jun:"中军",
+  {id:"liyanxian", name:"李彦仙", title:"陕州镇抚使", hp:4, faction:"song", suit:"spade", jun:"中军",
    skill:{name:"守陕", desc:"你打出【避】后，可对攻击者出一张【斩】（每回合限一次）。",
      counterSlash:true}},
-  {id:"wujiang", name:"吴玠", title:"关西六路都统制", hp:4, faction:"song", jun:"中军",
+  {id:"wujiang", name:"吴玠", title:"关西六路都统制", hp:4, faction:"song", suit:"spade", jun:"中军",
    skill:{name:"坊州", desc:"你每失去1点体力，可摸一张牌。",
      drawOnDamage:true}},
-  {id:"zhangrong", name:"张荣", title:"梁山泊 · 御营水军都统制", hp:3, faction:"song", jun:"水军",
+  {id:"zhangrong", name:"张荣", title:"梁山泊 · 御营水军都统制", hp:3, faction:"song", suit:"spade", jun:"水军",
    skill:{name:"小吴埽", desc:"出牌阶段限一次，你可将一张【斩】当【粮】使用。",
      onceAs:{"zhan":"liang"}}},
-  // 金军反贼红
-  {id:"wanyanluosuo", name:"完颜娄室", title:"金国第一名将 · 西路军帅", hp:5, faction:"jin", jun:"西路军",
+  // 金军反贼红（♦方块）
+  {id:"wanyanluosuo", name:"完颜娄室", title:"金国第一名将 · 西路军帅", hp:5, faction:"jin", suit:"diamond", jun:"西路军",
    skill:{name:"牙将", desc:"出牌阶段，你可额外使用一张【斩】。",
      extraSlash:1}},
-  {id:"wanyanzongbi", name:"完颜兀术", title:"金太祖四子 · 东路军帅", hp:4, faction:"jin", jun:"东路军",
+  {id:"wanyanzongbi", name:"完颜兀术", title:"金太祖四子 · 东路军帅", hp:4, faction:"jin", suit:"diamond", jun:"东路军",
    skill:{name:"搜山", desc:"出牌阶段限一次，可观看任意一名玩家的手牌。",
      peep:true}},
-  {id:"wantantalan", name:"完颜挞懒", title:"都元帅府右副元帅", hp:4, faction:"jin", jun:"都元帅府",
+  {id:"wantantalan", name:"完颜挞懒", title:"都元帅府右副元帅", hp:4, faction:"jin", suit:"diamond", jun:"都元帅府",
    skill:{name:"缓攻", desc:"你使用的锦囊牌不可被【固垒】抵消。",
      pierceGuard:true}},
-  // 内奸灰
-  {id:"qinhui", name:"秦桧", title:"御史中丞 · 后为金人所用", hp:3, faction:"neutral", jun:"文臣",
+  // 内奸灰（表面宋臣，花色♠，身份暗反）
+  {id:"qinhui", name:"秦桧", title:"御史中丞 · 后为金人所用", hp:3, faction:"neutral", suit:"spade", jun:"文臣",
    skill:{name:"南归", desc:"出牌阶段限一次，可与一名玩家交换一张手牌。",
      swap:true},
    skill2:{name:"议和", desc:"当你成为【斩】的目标时，可令该【斩】无效（每局限一次）。",
      onceBlock:true}},
-  {id:"zhangjun", name:"张俊", title:"御营右军都统制", hp:4, faction:"neutral", jun:"右军",
+  {id:"zhangjun", name:"张俊", title:"御营右军都统制", hp:4, faction:"neutral", suit:"spade", jun:"右军",
    skill:{name:"善财", desc:"摸牌阶段多摸一张牌，但弃牌阶段需多弃一张。",
      drawBonus:1, discardExtra:1}},
-  {id:"wanqixie", name:"万俟卨", title:"殿中侍御史", hp:3, faction:"neutral", jun:"文臣",
+  {id:"wanqixie", name:"万俟卨", title:"殿中侍御史", hp:3, faction:"neutral", suit:"spade", jun:"文臣",
    skill:{name:"揣摩", desc:"你始终可以看到主公的身份牌。",
      seeLord:true}},
-  // 西夏（马场、铁鹞子、西夏文）
-  {id:"lichage", name:"李察哥", title:"西夏晋王 · 铁鹞子统帅", hp:5, faction:"xixia", jun:"铁鹞子",
+  // 西夏（♣梅花）
+  {id:"lichage", name:"李察哥", title:"西夏晋王 · 铁鹞子统帅", hp:5, faction:"xixia", suit:"club", jun:"铁鹞子",
    skill:{name:"铁鹞子", desc:"装备战马后，你的攻击距离+1，出【斩】伤害+1。",
      heavyCavalry:true}},
-  {id:"rendejing", name:"任得敬", title:"西夏权臣 · 河西马场监", hp:4, faction:"xixia", jun:"马场",
-   skill:{name:"河西马场", desc:"出牌阶段限一次，可将一张手牌当【战马】装备。",
+  {id:"rendejing", name:"任得敬", title:"西夏权臣 · 河西马场监", hp:4, faction:"xixia", suit:"club", jun:"马场",
+   skill:{name:"河西马场", desc:"每回合开始自动装备战马（若空着）。",
      onceAsHorse:true},
    skill2:{name:"西夏文", desc:"每局限一次，可抵消任意一张锦囊牌的效果。",
      oncePierce:true}},
-  // 大理（佛国、巫蛊、段氏）
-  {id:"duanheyu", name:"段和誉", title:"大理宣宗 · 佛国世子", hp:4, faction:"dali", jun:"段氏",
+  // 大理（♥红桃）
+  {id:"duanheyu", name:"段和誉", title:"大理宣宗 · 佛国世子", hp:4, faction:"dali", suit:"heart", jun:"段氏",
    skill:{name:"佛国", desc:"每回合开始时回1点体力；你不能被【火烧】指定。",
      buddha:true}},
-  {id:"gaoliangcheng", name:"高量成", title:"大理相国 · 乌蛮族长", hp:3, faction:"dali", jun:"高氏",
+  {id:"gaoliangcheng", name:"高量成", title:"大理相国 · 乌蛮族长", hp:3, faction:"dali", suit:"heart", jun:"高氏",
    skill:{name:"巫蛊", desc:"出牌阶段限一次，弃一张牌令一名玩家下回合出【斩】伤害-1。",
      witchcraft:true},
    skill2:{name:"茶马古道", desc:"你每使用一张【粮】，可额外摸一张牌。",
@@ -580,7 +580,10 @@ function renderPickGrid(){
     const div = document.createElement("div");
     div.className = "hero-card " + h.faction;
     div.dataset.heroId = h.id;
+    const suitMap = {spade:"♠", heart:"♥", club:"♣", diamond:"♦"};
+    const suitColor = {spade:"#7ab0d4", heart:"#d47a7a", club:"#9ad49a", diamond:"#d4a86a"};
     div.innerHTML = `
+      <div style="font-size:14px;color:${suitColor[h.suit]};text-align:right;line-height:1;">${suitMap[h.suit]}</div>
       <div class="hero-name">${h.name}</div>
       <div class="hero-hp">${"◆".repeat(h.hp)}</div>
       <div class="hero-skill"><b>${h.skill.name}</b>：${h.skill.desc}</div>
@@ -626,10 +629,19 @@ function confirmPick(){
     return makePlayer(h, roles[i-1], i < humanCount);
   });
 
-  // 洗牌、发牌
-  G.deck = shuffle(CARD_POOL.map((c,i)=>({...c, uid:i+"_"+Math.random().toString(36).slice(2)})));
-  G.players.forEach(p=>{
-    p.hand = drawCards(4);
+  // 洗牌、发牌（每张牌随机分配花色和点数）
+  const suits = ["spade","heart","club","diamond"];
+  const ranks = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+  G.deck = shuffle(CARD_POOL.map((c,i)=>({
+    ...c,
+    uid:i+"_"+Math.random().toString(36).slice(2),
+    suit: suits[Math.floor(Math.random()*4)],
+    rank: ranks[Math.floor(Math.random()*13)],
+  })));
+  // 初始手牌数：按人数，人少牌多
+  const baseHand = G.players.length >= 4 ? 4 : (G.players.length === 3 ? 5 : 6);
+  G.players.forEach((p,i)=>{
+    p.hand = drawCards(p.role==="lord" ? baseHand+1 : baseHand);
   });
 
   showReveal();
@@ -861,8 +873,8 @@ function endPlayPhase(){
   // 弃牌阶段
   G.phase = "discard";
   let maxHand = p.maxHp;
-  // 五军联动：同阵营有其他存活武将时，手牌上限+1（固定，不叠加）
-  const alliesAlive = G.players.some(pl=>!pl.dead && pl.faction===p.faction && pl.id!==p.id);
+  // 五军联动：同花色有其他存活武将时，手牌上限+1（固定，不叠加）
+  const alliesAlive = G.players.some(pl=>!pl.dead && pl.hero.suit===p.hero.suit && pl.id!==p.id);
   if(alliesAlive) maxHand += 1;
   // 南阳战场牌：手牌上限+2
   if(p.equip.bf==="bf_nanyang") maxHand += 2;
@@ -974,20 +986,19 @@ function playCard(cardUid){
     render();
     return;
   }
-  // 主战：弃任意张牌，每弃一张摸一张；主公/同阵营额外摸1张
+  // 主战：弃任意张牌，每弃一张摸一张；每弃一张与自己武将同花色的牌额外多摸1张
   if(card.type==="zhanzhu"){
     p.hand.splice(idx,1);
     G.discard.push(card);
-    // 人类玩家：弹出选择要弃的牌（简化：弃一半手牌）
     const toDiscard = p.hand.slice();
     p.hand = [];
-    toDiscard.forEach(c=>G.discard.push(c));
-    let n = toDiscard.length;
-    // 主公或忠臣（同身份阵营）额外摸1张
-    if(p.role==="lord" || p.role==="loyalist"){
-      n += 1;
-      log("me", "【主战】同仇敌忾，你额外摸1张");
-    }
+    let suitBonus = 0;
+    toDiscard.forEach(c=>{
+      G.discard.push(c);
+      if(c.suit===p.hero.suit) suitBonus++;
+    });
+    let n = toDiscard.length + suitBonus;
+    if(suitBonus>0) log("me", `【主战】其中${suitBonus}张与你同花色，额外多摸${suitBonus}张`);
     p.hand.push(...drawCards(n));
     log("me", `你下旨【主战】，弃${toDiscard.length}牌、摸${n}牌`);
     render();
@@ -1336,11 +1347,11 @@ function killPlayer(target, sourceIdx){
     lord.martyrUnlocked = true;
     log("system", `【死节】忠臣${target.hero.name}殉国！主公${lord.hero.name}解锁限定技【死节诏】——出牌阶段可弃所有牌，令忠臣各摸2牌、本回合出斩不限次`);
   }
-  // 【同袍遗志】同阵营其他存活武将各摸1牌
+  // 【花色遗志】同花色其他存活武将各摸1牌
   G.players.forEach(pl=>{
-    if(!pl.dead && pl.faction===target.faction && pl.id!==target.id){
+    if(!pl.dead && pl.hero.suit===target.hero.suit && pl.id!==target.id){
       pl.hand.push(...drawCards(1));
-      log("heal", `【同袍遗志】${pl.hero.name}继承${target.hero.name}遗志，摸一张牌`);
+      log("heal", `【花色遗志】${pl.hero.name}与${target.hero.name}同气连枝，继承遗志摸一张牌`);
     }
   });
 
@@ -1743,10 +1754,15 @@ function render(){
       }
       if(disabled) div.classList.add("disabled");
 
+      const suitMap = {spade:["♠","#7ab0d4"], heart:["♥","#d47a7a"], club:["♣","#9ad49a"], diamond:["♦","#d4a86a"]};
+      const s = suitMap[card.suit] || ["","#888"];
+      const isSameSuit = card.suit && me.hero.suit && card.suit===me.hero.suit;
       div.innerHTML = `
+        <div style="font-size:11px;color:${s[1]};text-align:left;line-height:1;">${s[0]} ${card.rank||""}</div>
         <div class="card-name">${card.name}</div>
-        <div class="card-type">${{basic:"基本牌",snake:"锦囊",equip:"装备",battlefield:"战场牌"}[card.kind]}</div>
+        <div class="card-type">${{basic:"基本牌",snake:"锦囊",equip:"装备",battlefield:"战场牌"}[card.kind]||""}</div>
         <div class="card-desc">${card.desc}</div>
+        ${isSameSuit?'<div style="font-size:9px;color:var(--gold-light);margin-top:2px;">同花色</div>':""}
       `;
       div.onclick = ()=>{
         if(me.discardPending && me.discardPending>0){
@@ -1795,14 +1811,14 @@ function render(){
         // 弃所有牌
         me.hand.forEach(c=>G.discard.push(c));
         me.hand = [];
-        // 忠臣各摸2牌（身份同阵营）
+        // 与主公同花色的存活武将各摸2牌
         G.players.forEach(pl=>{
-          if(!pl.dead && pl.role==="loyalist"){
+          if(!pl.dead && pl.hero.suit===me.hero.suit && pl.id!==me.id){
             pl.hand.push(...drawCards(2));
           }
         });
         G.slashUsed = -99; // 本回合出斩不限次
-        log("me", "【死节诏】！忠臣血未冷——你弃所有牌，忠臣各摸2牌，本回合出斩不限次！");
+        log("me", "【死节诏】！忠臣血未冷——你弃所有牌，同袍各摸2牌，本回合出斩不限次！");
         render();
       };
       bar.appendChild(btnM);
@@ -1995,8 +2011,19 @@ function startOnlineGame(numReal){
   for(let i=numReal-1;i<3;i++){
     G.players.push(makePlayer(allHeroes[i], roles[i]||"rebel", false));
   }
-  G.deck = shuffle(CARD_POOL.map((c,i)=>({...c, uid:i+"_"+Math.random().toString(36).slice(2)})));
-  G.players.forEach(p=>p.hand = drawCards(4));
+  // 洗牌发牌（含花色点数）
+  const suits = ["spade","heart","club","diamond"];
+  const ranks = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+  G.deck = shuffle(CARD_POOL.map((c,i)=>({
+    ...c,
+    uid:i+"_"+Math.random().toString(36).slice(2),
+    suit: suits[Math.floor(Math.random()*4)],
+    rank: ranks[Math.floor(Math.random()*13)],
+  })));
+  const baseHand = G.players.length >= 4 ? 4 : (G.players.length === 3 ? 5 : 6);
+  G.players.forEach(p=>{
+    p.hand = drawCards(p.role==="lord" ? baseHand+1 : baseHand);
+  });
   // 给每个客户端发座位号和身份（只有自己能看到）
   guestConns.forEach((c,i)=>{
     c.send({type:"start", seat:i+1});
