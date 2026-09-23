@@ -1,0 +1,2006 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>绍宋杀 · 宋金风云录</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>宋</text></svg>">
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+/* ============ 全局与主题 ============ */
+:root{
+  --bg:#1a1410;
+  --bg2:#2a2018;
+  --panel:#3a2e22;
+  --gold:#c9a961;
+  --gold-light:#e8d5a3;
+  --ink:#f0e6d2;
+  --dim:#9a8a70;
+  --song:#4a7a9e;       /* 宋军蓝 */
+  --song-light:#7ab0d4;
+  --jin:#9e4a4a;        /* 金军红 */
+  --jin-light:#d47a7a;
+  --neutral:#7a7a6a;    /* 内奸灰 */
+  --neutral-light:#b0b0a0;
+  --lord:#c9a961;       /* 主公金 */
+  --hp-red:#c0392b;
+  --hp-green:#27ae60;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{
+  background:radial-gradient(ellipse at top,#2a2018 0%,#1a1410 70%);
+  color:var(--ink);
+  font-family:"Noto Serif SC","Songti SC","SimSun",serif;
+  overflow:hidden;
+  user-select:none;
+}
+/* 纹理 */
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;
+  background-image:
+    repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.05) 2px,rgba(0,0,0,.05) 4px);
+  opacity:.5;
+}
+
+/* ============ 视图切换 ============ */
+.screen{display:none;height:100vh;width:100vw;overflow:auto;}
+.screen.active{display:flex;flex-direction:column;}
+
+/* ============ 开始界面 ============ */
+#screen-home{
+  align-items:center;justify-content:center;text-align:center;
+  background:radial-gradient(ellipse at center top,#3a2e22 0%,#1a1410 80%);
+}
+#screen-home h1{
+  font-size:72px;color:var(--gold);letter-spacing:12px;
+  text-shadow:0 0 30px rgba(201,169,97,.4);
+  margin-bottom:8px;font-weight:900;
+}
+#screen-home .subtitle{
+  color:var(--dim);font-size:18px;letter-spacing:8px;margin-bottom:50px;
+}
+#screen-home .desc{
+  max-width:600px;color:var(--ink);line-height:1.9;font-size:15px;
+  background:rgba(0,0,0,.3);padding:24px 32px;border:1px solid var(--panel);
+  border-radius:4px;margin-bottom:40px;text-align:left;
+}
+#screen-home .desc b{color:var(--gold);}
+.btn{
+  display:inline-block;padding:14px 48px;font-size:18px;letter-spacing:6px;
+  background:linear-gradient(180deg,#5a4a32,#3a2e22);color:var(--gold-light);
+  border:1px solid var(--gold);cursor:pointer;border-radius:2px;
+  font-family:inherit;transition:all .2s;
+}
+.btn:hover{background:linear-gradient(180deg,#6a5a42,#4a3e32);box-shadow:0 0 20px rgba(201,169,97,.3);}
+.btn-sm{padding:8px 20px;font-size:14px;letter-spacing:2px;}
+
+/* ============ 选将界面 ============ */
+#screen-pick{padding:20px;}
+#screen-pick h2{color:var(--gold);text-align:center;margin-bottom:16px;letter-spacing:4px;}
+.pick-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:12px;max-width:1200px;margin:0 auto;
+}
+.hero-card{
+  background:var(--panel);border:2px solid var(--dim);border-radius:6px;
+  padding:10px;cursor:pointer;transition:all .2s;position:relative;
+}
+.hero-card:hover{transform:translateY(-3px);border-color:var(--gold);box-shadow:0 4px 16px rgba(0,0,0,.4);}
+.hero-card.song{border-top:4px solid var(--song);}
+.hero-card.jin{border-top:4px solid var(--jin);}
+.hero-card.neutral{border-top:4px solid var(--neutral);}
+.hero-card.lord{border:2px solid var(--gold);box-shadow:0 0 12px rgba(201,169,97,.3);}
+.hero-card.selected{border-color:var(--gold);background:#4a3e2a;}
+.hero-name{font-size:18px;font-weight:bold;color:var(--ink);margin-bottom:4px;}
+.hero-hp{color:var(--hp-red);font-size:14px;margin-bottom:6px;}
+.hero-skill{font-size:12px;color:var(--gold-light);line-height:1.5;}
+.hero-title{font-size:11px;color:var(--dim);margin-top:4px;}
+.pick-info{text-align:center;margin:16px 0;color:var(--dim);font-size:14px;}
+.pick-actions{text-align:center;margin-top:16px;}
+
+/* ============ 游戏界面 ============ */
+#screen-game{
+  padding:0;
+  background:radial-gradient(ellipse at center,#2a2018 0%,#15100c 100%);
+}
+.game-top{
+  display:flex;justify-content:center;gap:16px;padding:12px 20px;
+  min-height:130px;flex-wrap:wrap;
+}
+.game-center{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:8px;min-height:200px;
+}
+.log-panel{
+  width:90%;max-width:700px;height:140px;overflow-y:auto;
+  background:rgba(0,0,0,.4);border:1px solid var(--panel);border-radius:4px;
+  padding:8px 12px;font-size:12px;line-height:1.7;color:var(--dim);
+}
+.log-panel .me{color:var(--gold-light);}
+.log-panel .damage{color:var(--jin-light);}
+.log-panel .heal{color:var(--song-light);}
+.log-panel .system{color:var(--gold);}
+
+.phase-indicator{
+  font-size:16px;color:var(--gold);margin-bottom:8px;letter-spacing:4px;
+}
+.current-player-banner{
+  font-size:14px;color:var(--ink);margin-bottom:8px;
+}
+.current-player-banner b{color:var(--gold);}
+
+/* 玩家卡牌（场上） */
+.player-slot{
+  background:var(--panel);border:2px solid var(--dim);border-radius:6px;
+  padding:8px 12px;min-width:140px;text-align:center;position:relative;
+  transition:all .2s;
+}
+.player-slot.active-turn{border-color:var(--gold);box-shadow:0 0 12px rgba(201,169,97,.4);}
+.player-slot.dead{opacity:.4;filter:grayscale(1);}
+.player-slot.is-me{border-color:var(--song-light);}
+.player-name{font-size:15px;font-weight:bold;margin-bottom:2px;}
+.player-role{font-size:11px;margin-bottom:4px;}
+.player-role.lord{color:var(--lord);}
+.player-role.loyalist{color:var(--song-light);}
+.player-role.rebel{color:var(--jin-light);}
+.player-role.renegade{color:var(--neutral-light);}
+.player-role.unknown{color:var(--dim);}
+.player-hp{font-size:13px;color:var(--hp-red);letter-spacing:2px;}
+.player-cards{font-size:11px;color:var(--dim);margin-top:2px;}
+.player-equip{font-size:11px;color:var(--gold-light);margin-top:2px;min-height:14px;}
+.identity-hidden{color:var(--dim);font-size:11px;}
+
+/* ============ 手牌区 ============ */
+.hand-area{
+  padding:10px 20px 20px;min-height:180px;
+  border-top:1px solid var(--panel);
+  background:rgba(0,0,0,.3);
+}
+.hand-label{font-size:12px;color:var(--dim);margin-bottom:8px;}
+.hand-cards{
+  display:flex;gap:8px;overflow-x:auto;padding:8px 4px;min-height:120px;
+}
+.card{
+  width:90px;height:130px;border-radius:6px;flex-shrink:0;
+  background:linear-gradient(180deg,#f0e6d2 0%,#d4c8a8 100%);
+  color:#2a1a0a;border:2px solid #8a7a5a;
+  padding:6px;cursor:pointer;transition:all .15s;
+  display:flex;flex-direction:column;position:relative;
+  font-family:"Noto Serif SC",serif;
+}
+.card:hover{transform:translateY(-10px);box-shadow:0 8px 20px rgba(0,0,0,.5);z-index:10;}
+.card.disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.card.disabled:hover{transform:none;box-shadow:none;}
+.card-name{font-size:13px;font-weight:bold;text-align:center;margin-bottom:2px;}
+.card-type{font-size:9px;text-align:center;color:#6a5a3a;margin-bottom:4px;}
+.card-desc{font-size:9px;line-height:1.4;text-align:center;flex:1;display:flex;align-items:center;justify-content:center;}
+.card-cost{position:absolute;top:2px;right:4px;font-size:11px;color:#9e4a4a;font-weight:bold;}
+.card.basic{background:linear-gradient(180deg,#f0e6d2,#d4c8a8);}
+.card.snake{background:linear-gradient(180deg,#e8c8a8,#c8a878);border-color:#9e6a3a;}
+.card.equip{background:linear-gradient(180deg,#a8c8e8,#7898c8);border-color:#3a5a8a;}
+.card.skill{background:linear-gradient(180deg,#e8a8c8,#c87898);border-color:#8a3a5a;}
+
+/* 选中目标提示 */
+.target-prompt{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  background:rgba(0,0,0,.85);padding:20px 30px;border:1px solid var(--gold);
+  border-radius:6px;z-index:100;text-align:center;
+}
+.target-prompt p{margin-bottom:12px;color:var(--gold-light);}
+.target-prompt .btn{margin:0 6px;}
+
+/* 按钮组 */
+.action-bar{
+  display:flex;gap:8px;justify-content:center;margin-top:8px;
+}
+.btn-action{
+  padding:8px 20px;font-size:13px;letter-spacing:2px;
+  background:var(--panel);color:var(--ink);border:1px solid var(--dim);
+  cursor:pointer;border-radius:3px;font-family:inherit;
+}
+.btn-action:hover{border-color:var(--gold);color:var(--gold-light);}
+.btn-action.primary{background:linear-gradient(180deg,#5a4a32,#3a2e22);color:var(--gold);border-color:var(--gold);}
+
+/* 身份揭晓弹窗 */
+.reveal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;
+}
+.reveal-box{
+  background:var(--bg2);border:2px solid var(--gold);border-radius:8px;
+  padding:40px 60px;text-align:center;max-width:500px;
+}
+.reveal-box h2{color:var(--gold);font-size:32px;letter-spacing:6px;margin-bottom:16px;}
+.reveal-box .role-label{font-size:18px;margin:8px 0;}
+.reveal-box .role-label.lord{color:var(--lord);}
+.reveal-box .role-label.loyalist{color:var(--song-light);}
+.reveal-box .role-label.rebel{color:var(--jin-light);}
+.reveal-box .role-label.renegade{color:var(--neutral-light);}
+.reveal-box p{color:var(--dim);font-size:13px;margin-top:16px;line-height:1.7;}
+
+/* 响应式 */
+@media (max-width:768px){
+  #screen-home h1{font-size:48px;letter-spacing:6px;}
+  .card{width:75px;height:110px;}
+  .player-slot{min-width:110px;padding:6px 8px;}
+}
+
+/* ============ 战场地带 ============ */
+.battlefield-banner{
+  text-align:center;padding:8px 16px;
+  background:linear-gradient(90deg,transparent,rgba(201,169,97,.15),transparent);
+  border-bottom:1px solid rgba(201,169,97,.3);
+  font-size:13px;color:var(--gold-light);letter-spacing:2px;
+}
+.battlefield-banner .bf-name{
+  font-size:16px;font-weight:bold;color:var(--gold);letter-spacing:4px;
+}
+.battlefield-banner .bf-desc{
+  font-size:11px;color:var(--dim);margin-top:2px;
+}
+
+/* ============ 事件横幅 ============ */
+.event-banner{
+  min-height:24px;font-size:13px;color:#e8c878;
+  text-align:center;margin:4px 0;padding:4px 12px;
+}
+.event-banner.ceasefire{
+  color:#7ab0d4;background:rgba(74,122,158,.15);
+  border:1px dashed rgba(122,176,212,.4);border-radius:3px;
+}
+
+/* 死节标记 */
+.martyr-mark{
+  display:inline-block;background:#9e4a4a;color:#fff;
+  font-size:10px;padding:1px 5px;border-radius:2px;margin-left:4px;
+}
+</style>
+</head>
+<body>
+
+<!-- ============ 开始界面 ============ -->
+<div id="screen-home" class="screen active">
+  <h1>绍宋杀</h1>
+  <div class="subtitle">宋 金 风 云 录</div>
+  <div class="desc">
+    <p><b>背景</b>：建炎南渡之后，穿越者赵玖（赵构）力主抗金，拒绝议和。宋金对峙，忠臣死节，奸佞潜行。</p>
+    <p style="margin-top:10px;"><b>身份局</b>：四人一局，身份暗抽——</p>
+    <p>· <b style="color:var(--lord)">主公</b>（赵玖）：杀光反贼与内奸，还于旧都。</p>
+    <p>· <b style="color:var(--song-light)">忠臣</b>：死保主公，共赴国难。</p>
+    <p>· <b style="color:var(--jin-light)">反贼</b>（金）：弑杀赵玖，覆我大宋。</p>
+    <p>· <b style="color:var(--neutral-light)">内奸</b>（主和派）：螳螂捕蝉，最后独存。</p>
+    <p style="margin-top:10px;"><b>绍宋特色</b>：</p>
+    <p>· <b>战场牌</b>：尧山/陕州/淮河/长社/南阳可抽到可装备，据守即得地利（伤害增减、摸牌、回血、免伤等）。</p>
+    <p>· <b>和议/主战</b>：和议令各方弃一摸一；主战弃任意牌、每弃一摸一，同阵营额外摸一。</p>
+    <p>· <b>死节诏</b>：忠臣殉国后主公解锁限定技——弃所有牌，宋军各摸2牌、本回合出斩不限次。</p>
+    <p>· <b>五军联动</b>：同阵营有其他存活武将时，手牌上限+1（固定不叠加）；同袍阵亡时其他同袍摸1牌继承遗志。</p>
+    <p>· <b>先知</b>：赵玖每回合窥看下家一张手牌。</p>
+    <p style="margin-top:10px;"><b>玩法</b>：基本牌 <b>斩 / 避 / 粮</b>，锦囊与装备各有妙用。轮到你时摸两张牌，出牌阶段可用牌攻击他人、使用锦囊、装备武器防具。血量为零且无人出粮救回即死亡。</p>
+  </div>
+  <div style="margin-bottom:20px;color:var(--dim);font-size:14px;letter-spacing:2px;">同座热座对战人数：</div>
+  <div style="display:flex;gap:12px;justify-content:center;margin-bottom:24px;">
+    <button class="btn btn-sm" onclick="startGame(1)">1人（3AI）</button>
+    <button class="btn btn-sm" onclick="startGame(2)">2人（2AI）</button>
+    <button class="btn btn-sm" onclick="startGame(3)">3人（1AI）</button>
+    <button class="btn btn-sm" onclick="startGame(4)">4人（全真人）</button>
+  </div>
+  <div style="margin-bottom:16px;color:var(--dim);font-size:14px;letter-spacing:2px;">线上远程对战：</div>
+  <div style="display:flex;gap:12px;justify-content:center;">
+    <button class="btn btn-sm" onclick="showLobby('create')">创建房间</button>
+    <button class="btn btn-sm" onclick="showLobby('join')">加入房间</button>
+  </div>
+</div>
+
+<!-- ============ 联机大厅 ============ -->
+<div id="screen-lobby" class="screen">
+  <div style="max-width:500px;margin:60px auto;text-align:center;padding:20px;">
+    <h2 style="color:var(--gold);letter-spacing:4px;margin-bottom:20px;">多 人 对 战</h2>
+    <div id="lobby-create" style="display:none;">
+      <p style="color:var(--dim);margin-bottom:8px;">你的昵称：</p>
+      <input id="host-name-input" maxlength="8" placeholder="输入昵称" value="玩家"
+        style="width:220px;padding:8px;font-size:15px;text-align:center;
+        background:var(--panel);color:var(--gold-light);border:1px solid var(--gold);border-radius:4px;font-family:inherit;">
+      <p style="color:var(--dim);margin:16px 0 8px;">房间已创建，房间号：</p>
+      <div id="room-code-display" style="font-size:36px;color:var(--gold);letter-spacing:10px;margin:8px 0;font-weight:bold;"></div>
+      <p style="color:var(--dim);font-size:13px;">把房间号告诉朋友，等他们加入（最多4人）</p>
+      <div id="lobby-players" style="margin:20px 0;text-align:left;display:flex;flex-direction:column;gap:6px;"></div>
+      <button class="btn" id="btn-start-online" onclick="hostStartGame()">开 战</button>
+      <button class="btn btn-sm" style="margin-top:12px;" onclick="backHome()">返回</button>
+    </div>
+    <div id="lobby-join" style="display:none;">
+      <p style="color:var(--dim);margin-bottom:8px;">你的昵称：</p>
+      <input id="guest-name-input" maxlength="8" placeholder="输入昵称"
+        style="width:220px;padding:8px;font-size:15px;text-align:center;
+        background:var(--panel);color:var(--gold-light);border:1px solid var(--gold);border-radius:4px;font-family:inherit;">
+      <p style="color:var(--dim);margin:16px 0 8px;">输入房主给你的房间号：</p>
+      <input id="room-code-input" maxlength="6" placeholder="房间号"
+        style="width:200px;padding:10px;font-size:20px;text-align:center;letter-spacing:6px;
+        background:var(--panel);color:var(--gold-light);border:1px solid var(--gold);border-radius:4px;
+        font-family:inherit;">
+      <br>
+      <button class="btn" style="margin-top:16px;" onclick="joinRoom()">加 入</button>
+      <button class="btn btn-sm" style="margin-top:12px;margin-left:8px;" onclick="backHome()">返回</button>
+      <p id="join-status" style="margin-top:12px;color:var(--jin-light);font-size:13px;"></p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 选将界面 ============ -->
+<div id="screen-pick" class="screen">
+  <h2>选 择 你 的 武 将</h2>
+  <div class="pick-info" id="pick-info">你将作为<strong>主公</strong>，请选择一名武将（主公默认赵玖，也可自选）</div>
+  <div class="pick-grid" id="pick-grid"></div>
+  <div class="pick-actions">
+    <button class="btn" onclick="confirmPick()">确 认 出 阵</button>
+    <button class="btn btn-sm" style="margin-left:12px;" onclick="showScreen('screen-home')">返回</button>
+  </div>
+</div>
+
+<!-- ============ 游戏界面 ============ -->
+<div id="screen-game" class="screen">
+  <div id="battlefield-banner" class="battlefield-banner"></div>
+  <div class="game-top" id="game-top"></div>
+  <div class="game-center">
+    <div class="phase-indicator" id="phase-indicator">—— 战 局 开 幕 ——</div>
+    <div class="current-player-banner" id="current-banner"></div>
+    <div id="event-banner" class="event-banner"></div>
+    <div class="log-panel" id="log-panel"></div>
+    <div class="action-bar" id="action-bar"></div>
+  </div>
+  <div class="hand-area">
+    <div class="hand-label" id="hand-label">你的手牌</div>
+    <div class="hand-cards" id="hand-cards"></div>
+  </div>
+</div>
+
+<!-- 身份揭晓 -->
+<div class="reveal-overlay" id="reveal-overlay" style="display:none;">
+  <div class="reveal-box" id="reveal-box"></div>
+</div>
+
+<script>
+/* ================================================================
+   游戏数据：战场牌（可装备的地利）
+   ================================================================ */
+const BATTLEFIELDS = [
+  {id:"yaoshan", name:"尧山", cardType:"bf_yaoshan", kind:"battlefield",
+   desc:"装备后：你出【斩】伤害+1；你受到的首次【斩】伤害-1。"},
+  {id:"shaanzhou", name:"陕州", cardType:"bf_shaanzhou", kind:"battlefield",
+   desc:"装备后：你每回合开始时摸一张牌；你不能被【火烧】。"},
+  {id:"huaihe", name:"淮河", cardType:"bf_huaihe", kind:"battlefield",
+   desc:"装备后：你受到【斩】伤害时可弃一张牌抵消（每回合一次）。"},
+  {id:"changshe", name:"长社", cardType:"bf_changshe", kind:"battlefield",
+   desc:"装备后：你出【避】后可反击攻击者（每回合一次）；攻击距离+1。"},
+  {id:"nanyang", name:"南阳", cardType:"bf_nanyang", kind:"battlefield",
+   desc:"装备后：你每回合开始时回1点体力（不超上限）；手牌上限+2。"},
+];
+
+/* ================================================================
+   游戏数据：武将（带军种字段，供五军联动）
+   ================================================================ */
+const HEROES = [
+  // 宋军忠臣蓝
+  {id:"zhaojiu", name:"赵玖", title:"宋高宗 · 穿越者", hp:4, faction:"song", jun:"御营",
+   skill:{name:"亲征", desc:"出牌阶段，你可将一张【斩】当【决斗】使用。",
+     use:(ctx)=>{ ctx.zhuanzheng=true; }},
+   skill2:{name:"先知", desc:"摸牌阶段多摸一张牌；你的回合开始时，可窥看下家一张手牌。", drawBonus:1, peekNext:true},
+   skill3:{name:"死节诏", desc:"【限定技】忠臣阵亡后解锁：出牌阶段可弃所有牌，令每名存活宋军摸2牌、本回合出斩不限次。", oncePerGame:true}},
+  {id:"yuefei", name:"岳飞", title:"御营前军都统制", hp:4, faction:"song", jun:"前军",
+   skill:{name:"尽忠", desc:"你可将任意手牌当【避】打出。", useAs:{"han":true}}},
+  {id:"hanzhong", name:"韩世忠", title:"御营左军都统制 · 延安郡王", hp:4, faction:"song", jun:"左军",
+   skill:{name:"风帆", desc:"每回合限一次，你受到【斩】伤害时可弃一张牌抵消之。",
+     armorOnce:true}},
+  {id:"liyanxian", name:"李彦仙", title:"陕州镇抚使", hp:4, faction:"song", jun:"中军",
+   skill:{name:"守陕", desc:"你打出【避】后，可对攻击者出一张【斩】（每回合限一次）。",
+     counterSlash:true}},
+  {id:"wujiang", name:"吴玠", title:"关西六路都统制", hp:4, faction:"song", jun:"中军",
+   skill:{name:"坊州", desc:"你每失去1点体力，可摸一张牌。",
+     drawOnDamage:true}},
+  {id:"zhangrong", name:"张荣", title:"梁山泊 · 御营水军都统制", hp:3, faction:"song", jun:"水军",
+   skill:{name:"小吴埽", desc:"出牌阶段限一次，你可将一张【斩】当【粮】使用。",
+     onceAs:{"zhan":"liang"}}},
+  // 金军反贼红
+  {id:"wanyanluosuo", name:"完颜娄室", title:"金国第一名将 · 西路军帅", hp:5, faction:"jin", jun:"西路军",
+   skill:{name:"牙将", desc:"出牌阶段，你可额外使用一张【斩】。",
+     extraSlash:1}},
+  {id:"wanyanzongbi", name:"完颜兀术", title:"金太祖四子 · 东路军帅", hp:4, faction:"jin", jun:"东路军",
+   skill:{name:"搜山", desc:"出牌阶段限一次，可观看任意一名玩家的手牌。",
+     peep:true}},
+  {id:"wantantalan", name:"完颜挞懒", title:"都元帅府右副元帅", hp:4, faction:"jin", jun:"都元帅府",
+   skill:{name:"缓攻", desc:"你使用的锦囊牌不可被【固垒】抵消。",
+     pierceGuard:true}},
+  // 内奸灰
+  {id:"qinhui", name:"秦桧", title:"御史中丞 · 后为金人所用", hp:3, faction:"neutral", jun:"文臣",
+   skill:{name:"南归", desc:"出牌阶段限一次，可与一名玩家交换一张手牌。",
+     swap:true},
+   skill2:{name:"议和", desc:"当你成为【斩】的目标时，可令该【斩】无效（每局限一次）。",
+     onceBlock:true}},
+  {id:"zhangjun", name:"张俊", title:"御营右军都统制", hp:4, faction:"neutral", jun:"右军",
+   skill:{name:"善财", desc:"摸牌阶段多摸一张牌，但弃牌阶段需多弃一张。",
+     drawBonus:1, discardExtra:1}},
+  {id:"wanqixie", name:"万俟卨", title:"殿中侍御史", hp:3, faction:"neutral", jun:"文臣",
+   skill:{name:"揣摩", desc:"你始终可以看到主公的身份牌。",
+     seeLord:true}},
+];
+
+/* ================================================================
+   游戏数据：卡牌牌堆
+   ================================================================ */
+// 基本牌：zhan=斩(杀)、han=避(闪)、liang=粮(桃)
+// 锦囊：juedou=决斗、huoshao=火烧、gulei=固垒、liji=离间、lianying=连营、qinwang=勤王、qinwangzhao=勤王诏、heyi=和议、zhanzhu=主战
+// 装备：shenbigong=神臂弓、burenjia=步人甲、zhanma=战马
+// 战场牌：bf_*（装备后获得地利）
+const CARD_POOL = [
+  // 斩 16张
+  ...Array(16).fill({type:"zhan", name:"斩", kind:"basic", desc:"对一名距离1内的玩家造成1点伤害。"}),
+  // 避 10张
+  ...Array(10).fill({type:"han", name:"避", kind:"basic", desc:"抵消一张【斩】的伤害。"}),
+  // 粮 8张
+  ...Array(8).fill({type:"liang", name:"粮", kind:"basic", desc:"回复1点体力（不能超过上限）；濒死时可救人。"}),
+  // 锦囊
+  {type:"juedou", name:"决斗", kind:"snake", desc:"与一名玩家轮流出【斩】，先出不出者掉1血。"},
+  {type:"juedou", name:"决斗", kind:"snake", desc:"与一名玩家轮流出【斩】，先出不出者掉1血。"},
+  {type:"juedou", name:"决斗", kind:"snake", desc:"与一名玩家轮流出【斩】，先出不出者掉1血。"},
+  {type:"huoshao", name:"火烧", kind:"snake", desc:"对一名玩家造成2点火焰伤害（不可被【避】抵消）。"},
+  {type:"huoshao", name:"火烧", kind:"snake", desc:"对一名玩家造成2点火焰伤害（不可被【避】抵消）。"},
+  {type:"gulei", name:"固垒", kind:"snake", desc:"抵消任意一张锦囊牌的效果。"},
+  {type:"gulei", name:"固垒", kind:"snake", desc:"抵消任意一张锦囊牌的效果。"},
+  {type:"lianying", name:"连营", kind:"snake", desc:"摸两张牌。"},
+  {type:"lianying", name:"连营", kind:"snake", desc:"摸两张牌。"},
+  {type:"lianying", name:"连营", kind:"snake", desc:"摸两张牌。"},
+  {type:"liji", name:"离间", kind:"snake", desc:"令两名其他玩家互相出一张【斩】，不出者掉1血。"},
+  {type:"qinwang", name:"勤王", kind:"snake", desc:"所有存活玩家各摸一张牌。"},
+  {type:"qinwangzhao", name:"勤王诏", kind:"snake", desc:"主公专属：忠臣各摸2张牌，反贼各摸1张牌。"},
+  {type:"qinwangzhao", name:"勤王诏", kind:"snake", desc:"主公专属：忠臣各摸2张牌，反贼各摸1张牌。"},
+  // 和议：所有存活玩家各弃1牌摸1牌
+  {type:"heyi", name:"和议", kind:"snake", desc:"所有存活玩家各弃一张手牌并摸一张牌。"},
+  {type:"heyi", name:"和议", kind:"snake", desc:"所有存活玩家各弃一张手牌并摸一张牌。"},
+  // 主战：主公或同阵营武将弃任意张牌，每弃一张摸一张
+  {type:"zhanzhu", name:"主战", kind:"snake", desc:"你可弃任意张牌，每弃一张摸一张牌（主公或同阵营武将使用时额外摸1张）。"},
+  {type:"zhanzhu", name:"主战", kind:"snake", desc:"你可弃任意张牌，每弃一张摸一张牌（主公或同阵营武将使用时额外摸1张）。"},
+  // 装备
+  {type:"shenbigong", name:"神臂弓", kind:"equip", desc:"攻击距离+2。"},
+  {type:"burenjia", name:"步人甲", kind:"equip", desc:"每回合可抵消一次【斩】的伤害。"},
+  {type:"zhanma", name:"战马", kind:"equip", desc:"其他玩家计算与你的距离+1。"},
+  // 战场牌（每种2张）
+  {type:"bf_yaoshan", name:"尧山", kind:"battlefield", desc:"装备后：你出【斩】伤害+1；你受到的首次【斩】伤害-1。"},
+  {type:"bf_yaoshan", name:"尧山", kind:"battlefield", desc:"装备后：你出【斩】伤害+1；你受到的首次【斩】伤害-1。"},
+  {type:"bf_shaanzhou", name:"陕州", kind:"battlefield", desc:"装备后：你每回合开始时摸一张牌；你不能被【火烧】。"},
+  {type:"bf_shaanzhou", name:"陕州", kind:"battlefield", desc:"装备后：你每回合开始时摸一张牌；你不能被【火烧】。"},
+  {type:"bf_huaihe", name:"淮河", kind:"battlefield", desc:"装备后：你受到【斩】伤害时可弃一张牌抵消（每回合一次）。"},
+  {type:"bf_huaihe", name:"淮河", kind:"battlefield", desc:"装备后：你受到【斩】伤害时可弃一张牌抵消（每回合一次）。"},
+  {type:"bf_changshe", name:"长社", kind:"battlefield", desc:"装备后：你出【避】后可反击攻击者（每回合一次）；攻击距离+1。"},
+  {type:"bf_changshe", name:"长社", kind:"battlefield", desc:"装备后：你出【避】后可反击攻击者（每回合一次）；攻击距离+1。"},
+  {type:"bf_nanyang", name:"南阳", kind:"battlefield", desc:"装备后：你每回合开始时回1点体力（不超上限）；手牌上限+2。"},
+  {type:"bf_nanyang", name:"南阳", kind:"battlefield", desc:"装备后：你每回合开始时回1点体力（不超上限）；手牌上限+2。"},
+];
+
+/* ================================================================
+   游戏状态
+   ================================================================ */
+let G = null;  // game state
+
+function newGameState(){
+  return {
+    players: [],      // 4名玩家
+    deck: [],         // 牌堆
+    discard: [],      // 弃牌堆
+    turnIndex: 0,     // 当前回合玩家
+    phase: "init",    // init/draw/play/discard/end
+    slashUsed: 0,     // 本回合已出斩数
+    pending: null,    // 等待响应
+    log: [],
+    over: false,
+    winner: null,
+    waitingResponse: false,
+    roundCount: 0,          // 回合数
+    martyrUsed: false,      // 死节限定技是否已用
+  };
+}
+
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+/* ================================================================
+   视图切换
+   ================================================================ */
+function showScreen(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+/* ================================================================
+   选将流程
+   ================================================================ */
+let selectedHeroId = null;
+let humanCount = 1;
+let pickedHeroes = [];  // 已选武将
+let pickSlotIndex = 0; // 当前在选第几个位置
+
+function startGame(n){
+  humanCount = n || 1;
+  selectedHeroId = null;
+  pickedHeroes = [];
+  pickSlotIndex = 0;
+  renderPickGrid();
+  updatePickInfo();
+  showScreen("screen-pick");
+}
+
+function updatePickInfo(){
+  const info = document.getElementById("pick-info");
+  if(pickSlotIndex===0){
+    info.innerHTML = `第 <b>1</b> 位玩家（主公）选将 —— 共 ${humanCount} 位真人，其余由AI填充`;
+  }else{
+    info.innerHTML = `第 <b>${pickSlotIndex+1}</b> 位真人玩家选将 —— 已选：${pickedHeroes.map(h=>h.name).join("、")}`;
+  }
+}
+
+function renderPickGrid(){
+  const grid = document.getElementById("pick-grid");
+  grid.innerHTML = "";
+  // 排除已选武将
+  const pickedIds = pickedHeroes.map(h=>h.id);
+  HEROES.filter(h=>!pickedIds.includes(h.id)).forEach(h=>{
+    const div = document.createElement("div");
+    div.className = "hero-card " + h.faction;
+    if(h.id==="zhaojiu") div.classList.add("lord");
+    div.dataset.heroId = h.id;
+    div.innerHTML = `
+      <div class="hero-name">${h.name}</div>
+      <div class="hero-hp">${"◆".repeat(h.hp)}</div>
+      <div class="hero-skill"><b>${h.skill.name}</b>：${h.skill.desc}</div>
+      ${h.skill2?`<div class="hero-skill"><b>${h.skill2.name}</b>：${h.skill2.desc}</div>`:""}
+      <div class="hero-title">${h.title}</div>
+    `;
+    div.onclick = ()=>{
+      document.querySelectorAll(".hero-card").forEach(c=>c.classList.remove("selected"));
+      div.classList.add("selected");
+      selectedHeroId = h.id;
+    };
+    grid.appendChild(div);
+  });
+}
+
+function confirmPick(){
+  if(!selectedHeroId){
+    alert("请先选择一名武将");
+    return;
+  }
+  const hero = HEROES.find(h=>h.id===selectedHeroId);
+  pickedHeroes.push(hero);
+  pickSlotIndex++;
+  selectedHeroId = null;
+
+  if(pickSlotIndex < humanCount){
+    // 下一个真人选将
+    renderPickGrid();
+    updatePickInfo();
+    return;
+  }
+
+  // 所有真人选完，AI填充剩余位置
+  const pickedIds = pickedHeroes.map(h=>h.id);
+  const remaining = shuffle(HEROES.filter(h=>!pickedIds.includes(h.id))).slice(0, 4-humanCount);
+  const allHeroes = [...pickedHeroes, ...remaining];
+
+  G = newGameState();
+  // 身份分配：第1位玩家=主公，其他3人随机 忠臣1/反贼1/内奸1
+  const roles = shuffle(["loyalist","rebel","renegade"]);
+  G.players = allHeroes.map((h,i)=>{
+    if(i===0) return makePlayer(h, "lord", true);
+    return makePlayer(h, roles[i-1], i < humanCount);
+  });
+
+  // 洗牌、发牌
+  G.deck = shuffle(CARD_POOL.map((c,i)=>({...c, uid:i+"_"+Math.random().toString(36).slice(2)})));
+  G.players.forEach(p=>{
+    p.hand = drawCards(4);
+  });
+
+  showReveal();
+}
+
+function makePlayer(hero, role, isHuman){
+  return {
+    id: Math.random().toString(36).slice(2),
+    hero: hero,
+    role: role,       // lord/loyalist/rebel/renegade
+    isHuman: isHuman,
+    hp: hero.hp,
+    maxHp: hero.hp,
+    hand: [],
+    equip: {weapon:null, armor:null, horse:null, bf:null},
+    dead: false,
+    martyrUnlocked: false,  // 死节限定技是否解锁
+    counters: {
+      armorUsed: false,
+      counterSlashUsed: false,
+      onceBlockUsed: false,
+      peepUsed: false,
+      swapUsed: false,
+      onceAsUsed: false,
+      zhuanzheng: false,
+      bfReduceUsed: false,
+      huaiheUsed: false,
+      changsheUsed: false,
+    },
+  };
+}
+
+function drawCards(n){
+  const cards = [];
+  for(let i=0;i<n;i++){
+    if(G.deck.length===0){
+      if(G.discard.length===0) break;
+      G.deck = shuffle(G.discard);
+      G.discard = [];
+    }
+    cards.push(G.deck.pop());
+  }
+  return cards;
+}
+
+/* ================================================================
+   身份揭晓
+   ================================================================ */
+let revealIndex = 0;
+function showReveal(){
+  revealIndex = 0;
+  showNextReveal();
+}
+
+function showNextReveal(){
+  const humans = G.players.map((p,i)=>({p,i})).filter(t=>t.p.isHuman);
+  if(revealIndex >= humans.length){
+    hideRevealAndStart();
+    return;
+  }
+  const {p, i} = humans[revealIndex];
+  const overlay = document.getElementById("reveal-overlay");
+  const box = document.getElementById("reveal-box");
+  const roleText = {
+    lord:["主公","lord","你的目标：杀光所有反贼和内奸。忠臣是你的盟友，反贼要取你性命，内奸可能随时反水。"],
+    loyalist:["忠臣","loyalist","你的目标：保护主公，消灭反贼与内奸。"],
+    rebel:["反贼","rebel","你的目标：弑杀主公。"],
+    renegade:["内奸","renegade","你的目标：最后存活者。先借主公之手杀尽他人，再取主公性命。"],
+  };
+  const [txt, cls, desc] = roleText[p.role];
+  box.innerHTML = `
+    <h2>${p.hero.name}</h2>
+    <p style="color:var(--dim);font-size:13px;">${p.hero.title}</p>
+    <div class="role-label ${cls}">身份：${txt}</div>
+    <p>${desc}</p>
+    <p style="margin-top:16px;color:var(--dim);font-size:12px;">请将设备交给下一位玩家查看身份</p>
+    <button class="btn" style="margin-top:20px;" onclick="nextReveal()">
+      ${revealIndex+1 < humans.length ? `下一位玩家（${revealIndex+2}/${humans.length}）` : "开 战"}
+    </button>
+  `;
+  overlay.style.display = "flex";
+}
+
+function nextReveal(){
+  revealIndex++;
+  showNextReveal();
+}
+
+function hideRevealAndStart(){
+  document.getElementById("reveal-overlay").style.display = "none";
+  showScreen("screen-game");
+  G.turnIndex = 0;
+  document.getElementById("battlefield-banner").innerHTML =
+    `<span class="bf-name">地利牌局</span><span class="bf-desc"> — 战场牌可装备，获得地利；和议/主战锦囊可周转牌数</span>`;
+  log("system", "—— 宋金风云，战幕拉开 ——");
+  startTurn();
+}
+
+/* ================================================================
+   日志
+   ================================================================ */
+function log(type, msg){
+  G.log.push({type, msg});
+  const panel = document.getElementById("log-panel");
+  const cls = {me:"me", damage:"damage", heal:"heal", system:"system"}[type]||"";
+  panel.innerHTML += `<div class="${cls}">${msg}</div>`;
+  panel.scrollTop = panel.scrollHeight;
+}
+
+/* ================================================================
+   距离计算
+   ================================================================ */
+function getDistance(fromIdx, toIdx){
+  // 简易：圆周距离
+  const n = G.players.length;
+  let d = Math.abs(fromIdx - toIdx);
+  d = Math.min(d, n - d);
+  // 战马：目标有战马则距离+1
+  const target = G.players[toIdx];
+  if(target.equip.horse && !target.dead) d += 1;
+  return d;
+}
+
+function attackRange(playerIdx){
+  // 基础攻击距离1，神臂弓+2
+  let r = 1;
+  const p = G.players[playerIdx];
+  if(p.equip.weapon) r += 2;
+  return r;
+}
+
+function canAttack(fromIdx, toIdx){
+  if(fromIdx===toIdx) return false;
+  if(G.players[toIdx].dead) return false;
+  return getDistance(fromIdx, toIdx) <= attackRange(fromIdx);
+}
+
+/* ================================================================
+   回合流程
+   ================================================================ */
+function startTurn(){
+  if(G.over) return;
+  // 检查游戏结束
+  checkGameOver();
+  if(G.over) return;
+
+  const p = G.players[G.turnIndex];
+  if(p.dead){
+    nextTurn();
+    return;
+  }
+
+  // 重置回合计数器
+  G.slashUsed = 0;
+  p.counters.armorUsed = false;
+  p.counters.counterSlashUsed = false;
+  p.counters.zhuanzheng = false;
+  p.counters.bfReduceUsed = false;
+  p.counters.huaiheUsed = false;
+  p.counters.changsheUsed = false;
+
+  // ===== 个人装备的战场牌效果 =====
+  // 陕州：每回合开始摸1张
+  if(p.equip.bf==="bf_shaanzhou"){
+    p.hand.push(...drawCards(1));
+    log("system", `【陕州地利】${p.hero.name}摸一张牌`);
+  }
+  // 南阳：每回合开始回1血
+  if(p.equip.bf==="bf_nanyang" && p.hp>0 && p.hp<p.maxHp){
+    p.hp = Math.min(p.maxHp, p.hp+1);
+    log("heal", `【南阳地利】${p.hero.name}回复1点体力`);
+  }
+
+  // 赵玖"先知"技能：看下家一张手牌
+  if(p.hero.skill2 && p.hero.skill2.peekNext && p.isHuman){
+    const nextIdx = (G.turnIndex+1)%G.players.length;
+    const next = G.players[nextIdx];
+    if(next && !next.dead && next.hand.length>0){
+      const peekCard = next.hand[Math.floor(Math.random()*next.hand.length)];
+      log("me", `【先知】你窥见到${next.hero.name}手中有一张【${peekCard.name}】`);
+    }
+  }
+
+  // 摸牌阶段
+  drawPhase(p);
+}
+
+function drawPhase(p){
+  G.phase = "draw";
+  let n = 2;
+  if(p.hero.skill2 && p.hero.skill2.drawBonus) n += p.hero.skill2.drawBonus;
+  const drawn = drawCards(n);
+  p.hand.push(...drawn);
+  log("system", `【${p.hero.name}】摸了 ${n} 张牌`);
+  render();
+
+  // 进入出牌阶段
+  setTimeout(()=>playPhase(p), 600);
+}
+
+function playPhase(p){
+  G.phase = "play";
+  document.getElementById("phase-indicator").textContent = "—— 出 牌 阶 段 ——";
+  render();
+  if(p.isHuman){
+    // 等待玩家操作，由卡片点击和"结束出牌"按钮驱动
+  }else{
+    // AI 行动
+    setTimeout(()=>aiPlay(p), 800);
+  }
+}
+
+function endPlayPhase(){
+  const p = G.players[G.turnIndex];
+  // 弃牌阶段
+  G.phase = "discard";
+  let maxHand = p.maxHp;
+  // 五军联动：同阵营有其他存活武将时，手牌上限+1（固定，不叠加）
+  const alliesAlive = G.players.some(pl=>!pl.dead && pl.faction===p.faction && pl.id!==p.id);
+  if(alliesAlive) maxHand += 1;
+  // 南阳战场牌：手牌上限+2
+  if(p.equip.bf==="bf_nanyang") maxHand += 2;
+  if(p.hero.skill2 && p.hero.skill2.discardExtra) maxHand -= p.hero.skill2.discardExtra;
+  if(maxHand < 0) maxHand = 0;
+  if(p.hand.length > maxHand){
+    const need = p.hand.length - maxHand;
+    if(p.isHuman){
+      log("me", `你需要弃 ${need} 张牌（手牌上限${maxHand}）`);
+      p.discardPending = need;
+      render();
+      return;
+    }else{
+      const toDiscard = shuffle(p.hand).slice(0, need);
+      p.hand = p.hand.filter(c=>!toDiscard.includes(c));
+      toDiscard.forEach(c=>G.discard.push(c));
+    }
+  }
+  nextTurn();
+}
+
+nextTurn = function(){
+  G.turnIndex = (G.turnIndex + 1) % G.players.length;
+  log("system", "—— ——");
+  render();
+  setTimeout(()=>startTurn(), 500);
+};
+
+/* ================================================================
+   玩家出一张牌
+   ================================================================ */
+function playCard(cardUid){
+  if(!G || G.phase!=="play") return;
+  const p = G.players[G.turnIndex];
+  if(!p.isHuman) return;
+  const idx = p.hand.findIndex(c=>c.uid===cardUid);
+  if(idx<0) return;
+  const card = p.hand[idx];
+
+  // 装备牌直接装备（武器/防具/战马）
+  if(card.kind==="equip"){
+    equipCard(p, card);
+    p.hand.splice(idx,1);
+    log("me", `你装备了【${card.name}】`);
+    render();
+    return;
+  }
+  // 战场牌直接装备到bf槽
+  if(card.kind==="battlefield"){
+    equipCard(p, card);
+    p.hand.splice(idx,1);
+    log("me", `你据守【${card.name}】，获得地利`);
+    render();
+    return;
+  }
+
+  // 连营：立即生效，无需目标
+  if(card.type==="lianying"){
+    p.hand.splice(idx,1);
+    G.discard.push(card);
+    const drawn = drawCards(2);
+    p.hand.push(...drawn);
+    log("me", `你使用了【连营】，摸了2张牌`);
+    render();
+    return;
+  }
+  // 勤王
+  if(card.type==="qinwang"){
+    p.hand.splice(idx,1);
+    G.discard.push(card);
+    G.players.forEach(pl=>{
+      if(!pl.dead){
+        pl.hand.push(...drawCards(1));
+      }
+    });
+    log("me", `你使用了【勤王】，所有人各摸1张牌`);
+    render();
+    return;
+  }
+  // 和议：所有存活玩家各弃1牌摸1牌
+  if(card.type==="heyi"){
+    p.hand.splice(idx,1);
+    G.discard.push(card);
+    G.players.forEach(pl=>{
+      if(pl.dead) return;
+      if(pl.hand.length>0){
+        const discarded = pl.hand.pop();
+        G.discard.push(discarded);
+      }
+      pl.hand.push(...drawCards(1));
+    });
+    log("me", "你促成【和议】——各方各弃一牌、各摸一牌");
+    render();
+    return;
+  }
+  // 主战：弃任意张牌，每弃一张摸一张；主公/同阵营额外摸1张
+  if(card.type==="zhanzhu"){
+    p.hand.splice(idx,1);
+    G.discard.push(card);
+    // 人类玩家：弹出选择要弃的牌（简化：弃一半手牌）
+    const toDiscard = p.hand.slice();
+    p.hand = [];
+    toDiscard.forEach(c=>G.discard.push(c));
+    let n = toDiscard.length;
+    // 主公或同阵营（忠臣）额外摸1张
+    const lord = G.players.find(pl=>pl.role==="lord");
+    if(p.role==="lord" || (lord && !lord.dead && p.faction===lord.faction)){
+      n += 1;
+      log("me", "【主战】同仇敌忾，你额外摸1张");
+    }
+    p.hand.push(...drawCards(n));
+    log("me", `你下旨【主战】，弃${toDiscard.length}牌、摸${n}牌`);
+    render();
+    return;
+  }
+  // 勤王诏（主公专属）
+  if(card.type==="qinwangzhao"){
+    if(p.role!=="lord"){
+      alert("【勤王诏】只有主公可使用");
+      return;
+    }
+    p.hand.splice(idx,1);
+    G.discard.push(card);
+    G.players.forEach(pl=>{
+      if(pl.dead) return;
+      if(pl.role==="loyalist"){
+        pl.hand.push(...drawCards(2));
+        log("heal", `【勤王诏】忠臣${pl.hero.name}摸2张牌`);
+      }else if(pl.role==="rebel"){
+        pl.hand.push(...drawCards(1));
+        log("damage", `【勤王诏】反贼${pl.hero.name}摸1张牌`);
+      }else if(pl.role==="lord"){
+        pl.hand.push(...drawCards(2));
+      }
+    });
+    log("me", "你下诏勤王——忠臣得援，反贼亦得喘息");
+    render();
+    return;
+  }
+
+  // 需要选目标的牌：斩、决斗、火烧、离间、观人手牌、交换
+  // 弹出目标选择
+  promptTarget(card, idx);
+}
+
+function promptTarget(card, handIdx){
+  const p = G.players[G.turnIndex];
+  let promptText = "";
+  let targets = [];
+
+  if(card.type==="zhan"){
+    promptText = "选择【斩】的目标：";
+    targets = G.players.map((pl,i)=>({pl,i})).filter(t=>canAttack(G.turnIndex, t.i));
+    if(targets.length===0){
+      alert("没有可攻击的目标");
+      return;
+    }
+  }else if(card.type==="juedou"){
+    promptText = "选择【决斗】的目标：";
+    targets = G.players.map((pl,i)=>({pl,i})).filter(t=>!t.pl.dead && t.i!==G.turnIndex);
+  }else if(card.type==="huoshao"){
+    promptText = "选择【火烧】的目标：";
+    targets = G.players.map((pl,i)=>({pl,i})).filter(t=>!t.pl.dead && t.i!==G.turnIndex);
+  }else if(card.type==="liji"){
+    promptText = "选择【离间】的两名目标（点击两次）：";
+    // 简化：只选1个目标，让TA与随机另一人决斗
+    targets = G.players.map((pl,i)=>({pl,i})).filter(t=>!t.pl.dead && t.i!==G.turnIndex);
+  }else if(card.type==="peep" || card.type==="swap"){
+    promptText = card.type==="peep"?"选择要观看手牌的玩家：":"选择要交换手牌的玩家：";
+    targets = G.players.map((pl,i)=>({pl,i})).filter(t=>!t.pl.dead && t.i!==G.turnIndex);
+  }else{
+    return;
+  }
+
+  // 用现有玩家位作为目标按钮
+  const overlay = document.createElement("div");
+  overlay.className = "target-prompt";
+  overlay.id = "target-overlay";
+  overlay.innerHTML = `<p>${promptText}</p>`;
+  targets.forEach(t=>{
+    const btn = document.createElement("button");
+    btn.className = "btn btn-sm";
+    btn.textContent = t.pl.hero.name + (t.pl.isHuman?"(你)":"");
+    btn.onclick = ()=>{
+      document.body.removeChild(overlay);
+      resolveTarget(card, handIdx, t.i);
+    };
+    overlay.appendChild(btn);
+  });
+  const cancel = document.createElement("button");
+  cancel.className = "btn btn-sm";
+  cancel.textContent = "取消";
+  cancel.onclick = ()=>document.body.removeChild(overlay);
+  overlay.appendChild(cancel);
+  document.body.appendChild(overlay);
+}
+
+function resolveTarget(card, handIdx, targetIdx){
+  const p = G.players[G.turnIndex];
+  p.hand.splice(handIdx,1);
+
+  if(card.type==="zhan"){
+    // 检查斩使用次数
+    let slashLimit = 1 + (p.hero.skill.extraSlash||0);
+    if(G.slashUsed >= slashLimit){
+      alert("本回合【斩】已用完");
+      p.hand.splice(handIdx,0,card); // 还回去
+      return;
+    }
+    G.slashUsed++;
+    G.discard.push(card);
+    log("me", `你对【${G.players[targetIdx].hero.name}】出了一张【斩】`);
+    // 等待目标响应
+    awaitSlash(targetIdx, G.turnIndex, "normal");
+  }
+  else if(card.type==="juedou"){
+    G.discard.push(card);
+    log("me", `你对【${G.players[targetIdx].hero.name}】使用了【决斗】`);
+    startDuel(G.turnIndex, targetIdx);
+  }
+  else if(card.type==="huoshao"){
+    G.discard.push(card);
+    log("me", `你对【${G.players[targetIdx].hero.name}】使用了【火烧】`);
+    dealDamage(targetIdx, 2, G.turnIndex, "fire");
+  }
+  else if(card.type==="liji"){
+    G.discard.push(card);
+    // 目标与另一个随机玩家互相斩
+    const others = G.players.map((pl,i)=>({pl,i})).filter(t=>!t.pl.dead && t.i!==targetIdx && t.i!==G.turnIndex);
+    if(others.length===0){log("me","无其他目标，离间无效");return;}
+    const other = others[Math.floor(Math.random()*others.length)];
+    log("me", `你使用【离间】，令【${G.players[targetIdx].hero.name}】与【${G.players[other.i].hero.name}】对峙`);
+    // 简化：两人各出斩，先出不出者掉血
+    duelBetween(targetIdx, other.i);
+  }
+  render();
+}
+
+/* ================================================================
+   出斩响应（等待对方出避）
+   ================================================================ */
+function awaitSlash(targetIdx, sourceIdx, kind){
+  const target = G.players[targetIdx];
+  log("system", `【${sourceIdx>=0?G.players[sourceIdx].hero.name:"?"}】的【斩】指向【${target.hero.name}】，请出【避】`);
+
+  // 步人甲自动触发
+  if(target.equip.armor && !target.counters.armorUsed){
+    // 30%概率用防具（AI）/ 玩家自动提示
+    if(!target.isHuman){
+      if(Math.random()<0.8){
+        target.counters.armorUsed = true;
+        log("damage", `【${target.hero.name}】的【步人甲】抵消了本次【斩】`);
+        render();
+        return;
+      }
+    }
+  }
+
+  // 玩家响应
+  if(target.isHuman){
+    G.waitingResponse = true;
+    // 弹出按钮：出避 / 不出
+    const overlay = document.createElement("div");
+    overlay.className = "target-prompt";
+    overlay.id = "target-overlay";
+    const hasHan = target.hand.findIndex(c=>c.type==="han" || (target.hero.skill.useAs && target.hero.skill.useAs.han))>=0;
+    overlay.innerHTML = `<p>有人对你出了【斩】，要出【避】吗？${hasHan?"":"<br><span style='color:#9e6a6a;font-size:11px;'>（你手牌中无【避】）</span>"}</p>`;
+    const btnHan = document.createElement("button");
+    btnHan.className = "btn btn-sm";
+    btnHan.textContent = "出避";
+    btnHan.onclick = ()=>{
+      document.body.removeChild(overlay);
+      G.waitingResponse = false;
+      const hanIdx = target.hand.findIndex(c=>c.type==="han" || (target.hero.skill.useAs && target.hero.skill.useAs.han));
+      if(hanIdx<0){
+        log("me", "你没有【避】，受到伤害");
+        dealDamage(targetIdx, 1, sourceIdx, kind);
+        render();
+        return;
+      }
+      const card = target.hand.splice(hanIdx,1)[0];
+      G.discard.push(card);
+      log("me", "你打出了【避】");
+      if(target.hero.skill.counterSlash && !target.counters.counterSlashUsed){
+        target.counters.counterSlashUsed = true;
+        log("me", "【守陕】触发：你可对攻击者出【斩】");
+        setTimeout(()=>{
+          if(sourceIdx>=0 && !G.players[sourceIdx].dead){
+            awaitSlash(sourceIdx, targetIdx, "normal");
+          }
+        }, 600);
+      }
+      render();
+    };
+    const btnNo = document.createElement("button");
+    btnNo.className = "btn btn-sm";
+    btnNo.textContent = "不避";
+    btnNo.onclick = ()=>{
+      document.body.removeChild(overlay);
+      G.waitingResponse = false;
+      dealDamage(targetIdx, 1, sourceIdx, kind);
+      render();
+    };
+    overlay.appendChild(btnHan);
+    overlay.appendChild(btnNo);
+    document.body.appendChild(overlay);
+  }else{
+    // AI：70%概率出避
+    const hasHan = target.hand.findIndex(c=>c.type==="han")>=0;
+    if(hasHan && Math.random()<0.7){
+      const idx = target.hand.findIndex(c=>c.type==="han");
+      const card = target.hand.splice(idx,1)[0];
+      G.discard.push(card);
+      log("damage", `【${target.hero.name}】打出了【避】`);
+      // 守陕
+      if(target.hero.skill.counterSlash && !target.counters.counterSlashUsed){
+        target.counters.counterSlashUsed = true;
+        setTimeout(()=>{
+          if(sourceIdx>=0 && !G.players[sourceIdx].dead){
+            awaitSlash(sourceIdx, targetIdx, "normal");
+          }
+        }, 600);
+      }
+    }else{
+      dealDamage(targetIdx, 1, sourceIdx, kind);
+    }
+    render();
+  }
+}
+
+/* ================================================================
+   伤害结算
+   ================================================================ */
+function dealDamage(targetIdx, n, sourceIdx, kind){
+  const target = G.players[targetIdx];
+  if(target.dead) return;
+  // 秦桧议和挡一次
+  if(target.hero.skill.onceBlock && !target.counters.onceBlockUsed && !target.dead){
+    if(!target.isHuman && Math.random()<0.5){
+      target.counters.onceBlockUsed = true;
+      log("damage", `【${target.hero.name}】发动【议和】，本次伤害无效`);
+      render();
+      return;
+    }
+  }
+  // 个人战场牌：陕州免疫火烧
+  if(target.equip.bf==="bf_shaanzhou" && kind==="fire"){
+    log("system", `【陕州地利】${target.hero.name}免疫【火烧】`);
+    render();
+    return;
+  }
+  // 个人战场牌：淮河受斩可弃牌抵消
+  if(target.equip.bf==="bf_huaihe" && kind==="normal" && !target.counters.huaiheUsed && target.hand.length>0){
+    // AI自动弃牌抵消；人类提示
+    if(!target.isHuman && Math.random()<0.6){
+      target.counters.huaiheUsed = true;
+      const c = target.hand.pop();
+      G.discard.push(c);
+      log("damage", `【淮河地利】${target.hero.name}弃牌抵消了本次伤害`);
+      render();
+      return;
+    }
+  }
+  // 个人战场牌：尧山——攻击者出斩伤害+1
+  if(sourceIdx>=0 && G.players[sourceIdx].equip.bf==="bf_yaoshan" && kind==="normal"){
+    n += 1;
+  }
+  // 个人战场牌：尧山——受首次斩伤害-1
+  if(target.equip.bf==="bf_yaoshan" && kind==="normal" && !target.counters.bfReduceUsed){
+    target.counters.bfReduceUsed = true;
+    n = Math.max(0, n-1);
+    log("system", `【尧山地利】${target.hero.name}首次受伤减1`);
+  }
+  if(n<=0){
+    log("system", `【${target.hero.name}】未受伤`);
+    render();
+    return;
+  }
+  target.hp -= n;
+  log("damage", `【${target.hero.name}】受到 ${n} 点伤害，剩余体力 ${Math.max(0,target.hp)}`);
+
+  // 吴玠受伤摸牌
+  if(target.hero.skill.drawOnDamage && target.hp>0){
+    target.hand.push(...drawCards(1));
+    log("heal", `【${target.hero.name}】发动【坊州】，摸了一张牌`);
+  }
+
+  // 濒死判定
+  if(target.hp<=0){
+    checkDying(target, sourceIdx);
+  }
+  render();
+}
+
+function checkDying(target, sourceIdx){
+  // 所有人可以出牌救
+  log("system", `【${target.hero.name}】濒死！如有【粮】可救人`);
+  // 简化：AI 50%概率用粮救自己；人类如果是濒死者自己问
+  if(target.isHuman){
+    // 问玩家
+    if(confirm(`你濒死了！是否出一张【粮】自救？（确定=是）`)){
+      const idx = target.hand.findIndex(c=>c.type==="liang");
+      if(idx>=0){
+        const card = target.hand.splice(idx,1)[0];
+        G.discard.push(card);
+        target.hp = Math.min(target.maxHp, target.hp+1);
+        log("heal", `你出【粮】自救，剩余体力 ${target.hp}`);
+        return;
+      }
+    }
+  }else{
+    // AI：自己50%概率自救
+    if(Math.random()<0.5){
+      const idx = target.hand.findIndex(c=>c.type==="liang");
+      if(idx>=0){
+        const card = target.hand.splice(idx,1)[0];
+        G.discard.push(card);
+        target.hp = Math.min(target.maxHp, target.hp+1);
+        log("heal", `【${target.hero.name}】出【粮】自救`);
+        return;
+      }
+    }
+  }
+  // 死亡
+  killPlayer(target, sourceIdx);
+}
+
+function killPlayer(target, sourceIdx){
+  target.dead = true;
+  target.hp = 0;
+  log("damage", `【${target.hero.name}】阵亡！`);
+  // 弃掉所有手牌
+  target.hand.forEach(c=>G.discard.push(c));
+  target.hand = [];
+
+  // 【死节限定技】忠臣殉国，主公解锁"死节诏"
+  const lord = G.players.find(p=>p.role==="lord" && !p.dead);
+  if(target.role==="loyalist" && lord && !lord.martyrUnlocked){
+    lord.martyrUnlocked = true;
+    log("system", `【死节】忠臣${target.hero.name}殉国！主公${lord.hero.name}解锁限定技【死节诏】——出牌阶段可弃所有牌，令宋军各摸2牌、本回合出斩不限次`);
+  }
+  // 【同袍遗志】同阵营其他存活武将各摸1牌
+  G.players.forEach(pl=>{
+    if(!pl.dead && pl.faction===target.faction && pl.id!==target.id){
+      pl.hand.push(...drawCards(1));
+      log("heal", `【同袍遗志】${pl.hero.name}继承${target.hero.name}遗志，摸一张牌`);
+    }
+  });
+
+  // 奖励：杀你的人摸3张牌（如果是主公杀忠臣，主公弃光）
+  if(sourceIdx>=0 && G.players[sourceIdx] && !G.players[sourceIdx].dead){
+    const killer = G.players[sourceIdx];
+    if(killer.role==="lord" && target.role==="loyalist"){
+      log("system", `主公误杀忠臣！【${killer.hero.name}】弃掉所有手牌和装备`);
+      killer.hand.forEach(c=>G.discard.push(c));
+      killer.hand = [];
+      killer.equip = {weapon:null,armor:null,horse:null,bf:null};
+    }else{
+      killer.hand.push(...drawCards(3));
+      log("system", `【${killer.hero.name}】击杀【${target.hero.name}】，摸了3张牌`);
+    }
+  }
+  checkGameOver();
+  render();
+}
+
+/* ================================================================
+   决斗
+   ================================================================ */
+function startDuel(aIdx, bIdx){
+  // a 先出斩
+  let turn = aIdx;
+  log("system", `决斗开始：【${G.players[aIdx].hero.name}】VS【${G.players[bIdx].hero.name}】`);
+  duelStep(aIdx, bIdx, aIdx);
+}
+
+function duelStep(aIdx, bIdx, current){
+  const other = current===aIdx?bIdx:aIdx;
+  const p = G.players[current];
+  if(p.dead) return;
+  // 找一张斩
+  const hasSlash = p.hand.findIndex(c=>c.type==="zhan")>=0;
+  if(hasSlash){
+    const idx = p.hand.findIndex(c=>c.type==="zhan");
+    const card = p.hand.splice(idx,1)[0];
+    G.discard.push(card);
+    log("system", `【${p.hero.name}】打出一张【斩】`);
+    setTimeout(()=>duelStep(aIdx,bIdx,other), 600);
+  }else{
+    log("damage", `【${p.hero.name}】无【斩】可出，受到1点伤害`);
+    dealDamage(current, 1, other, "normal");
+  }
+  render();
+}
+
+function duelBetween(aIdx, bIdx){
+  // 离间简化：a 先出斩，不出则掉血
+  const a = G.players[aIdx];
+  const b = G.players[bIdx];
+  const aHas = a.hand.findIndex(c=>c.type==="zhan")>=0;
+  if(!aHas){
+    log("damage", `【${a.hero.name}】无法对【${b.hero.name}】出【斩】，受到1点伤害`);
+    dealDamage(aIdx, 1, -1, "normal");
+  }else{
+    // a出斩，b需避
+    const idx = a.hand.findIndex(c=>c.type==="zhan");
+    const card = a.hand.splice(idx,1)[0];
+    G.discard.push(card);
+    setTimeout(()=>awaitSlash(bIdx, aIdx, "normal"), 400);
+  }
+}
+
+/* ================================================================
+   装备
+   ================================================================ */
+function equipCard(p, card){
+  if(card.type==="shenbigong"){
+    if(p.equip.weapon) G.discard.push(p.equip.weapon);
+    p.equip.weapon = card;
+  }else if(card.type==="burenjia"){
+    if(p.equip.armor) G.discard.push(p.equip.armor);
+    p.equip.armor = card;
+  }else if(card.type==="zhanma"){
+    if(p.equip.horse) G.discard.push(p.equip.horse);
+    p.equip.horse = card;
+  }else if(card.kind==="battlefield"){
+    if(p.equip.bf) G.discard.push({type:p.equip.bf, name:card.name});
+    p.equip.bf = card.type;
+  }
+}
+
+/* ================================================================
+   游戏结束判定
+   ================================================================ */
+function checkGameOver(){
+  const lord = G.players.find(p=>p.role==="lord");
+  const rebels = G.players.filter(p=>p.role==="rebel" && !p.dead);
+  const loyalists = G.players.filter(p=>p.role==="loyalist" && !p.dead);
+  const renegades = G.players.filter(p=>p.role==="renegade" && !p.dead);
+
+  if(!lord || lord.dead){
+    // 主公死
+    if(rebels.length===0 && loyalists.length===0 && renegades.length<=1){
+      // 内奸赢（如果只剩内奸）
+      G.winner = "renegade";
+    }else{
+      G.winner = "rebel";
+    }
+    G.over = true;
+  }else if(rebels.length===0 && renegades.length===0){
+    G.winner = "lord";
+    G.over = true;
+  }
+  if(G.over){
+    showGameOver();
+  }
+}
+
+function showGameOver(){
+  const overlay = document.getElementById("reveal-overlay");
+  const box = document.getElementById("reveal-box");
+  const me = G.players.find(p=>p.isHuman);
+  const win = (G.winner==="lord" && (me.role==="lord"||me.role==="loyalist")) ||
+              (G.winner==="rebel" && me.role==="rebel") ||
+              (G.winner==="renegade" && me.role==="renegade");
+  const roleMap = {lord:"主公",loyalist:"忠臣",rebel:"反贼",renegade:"内奸"};
+  box.innerHTML = `
+    <h2>${win?"大 捷":"战 败"}</h2>
+    <p style="margin-top:12px;">
+      ${G.winner==="lord"?"大宋还于旧都，君臣同心，国势复振。":""}
+      ${G.winner==="rebel"?"赵玖殒命，金人饮马长江。":""}
+      ${G.winner==="renegade"?"螳螂捕蝉黄雀在后，最终之人独掌乾坤。":""}
+    </p>
+    <p style="margin-top:16px;">你的身份：${roleMap[me.role]} · 武将：${me.hero.name}</p>
+    <p style="margin-top:8px;color:var(--dim);">
+      ${G.players.filter(p=>p.dead).map(p=>`【${p.hero.name}】(${roleMap[p.role]})阵亡`).join("　")}
+    </p>
+    <button class="btn" style="margin-top:24px;" onclick="location.reload()">再 来 一 局</button>
+  `;
+  overlay.style.display = "flex";
+}
+
+/* ================================================================
+   AI 回合
+   ================================================================ */
+function aiPlay(p){
+  if(G.over) return;
+  const myIdx = G.turnIndex;
+  // 简单AI：
+  // 1. 如果有连营/勤王，先用
+  // 2. 如果有粮且血少，用粮
+  // 3. 装备能装就装
+  // 4. 选择攻击目标（根据身份）
+  // 5. 出斩/决斗/火烧
+
+  // 先判断攻击目标优先级
+  function chooseTarget(){
+    const others = G.players.map((pl,i)=>({pl,i})).filter(t=>!t.pl.dead && t.i!==myIdx);
+    let priority;
+    if(p.role==="rebel"){
+      // 反贼：优先打主公
+      priority = others.sort((a,b)=>{
+        if(a.pl.role==="lord") return -1;
+        if(b.pl.role==="lord") return 1;
+        return a.pl.hp - b.pl.hp;
+      });
+    }else if(p.role==="loyalist"){
+      // 忠臣：绝不打主公，打其他人中血少的
+      const nonLord = others.filter(t=>t.pl.role!=="lord");
+      priority = nonLord.length?nonLord.sort((a,b)=>a.pl.hp - b.pl.hp):others;
+    }else if(p.role==="lord"){
+      // 主公：可以打任何人，优先打血少的（猜反贼）
+      priority = others.sort((a,b)=>a.pl.hp - b.pl.hp);
+    }else{
+      // 内奸：先打非主公中血少的，平衡双方
+      const nonLord = others.filter(t=>t.pl.role!=="lord");
+      priority = nonLord.length?nonLord.sort((a,b)=>a.pl.hp - b.pl.hp):others;
+    }
+    return priority[0];
+  }
+
+  // 使用一张牌
+  function useOneCard(){
+    if(G.over) return false;
+    // 1. 连营
+    let idx = p.hand.findIndex(c=>c.type==="lianying");
+    if(idx>=0){
+      const card = p.hand.splice(idx,1)[0];
+      G.discard.push(card);
+      p.hand.push(...drawCards(2));
+      log("system", `【${p.hero.name}】使用【连营】，摸了2张牌`);
+      render();
+      return true;
+    }
+    // 2. 勤王
+    idx = p.hand.findIndex(c=>c.type==="qinwang");
+    if(idx>=0){
+      const card = p.hand.splice(idx,1)[0];
+      G.discard.push(card);
+      G.players.forEach(pl=>{if(!pl.dead) pl.hand.push(...drawCards(1));});
+      log("system", `【${p.hero.name}】使用【勤王】`);
+      render();
+      return true;
+    }
+    // 2b. 勤王诏（主公用）
+    idx = p.hand.findIndex(c=>c.type==="qinwangzhao");
+    if(idx>=0 && p.role==="lord"){
+      const card = p.hand.splice(idx,1)[0];
+      G.discard.push(card);
+      G.players.forEach(pl=>{
+        if(pl.dead) return;
+        if(pl.role==="loyalist" || pl.role==="lord") pl.hand.push(...drawCards(2));
+        else pl.hand.push(...drawCards(1));
+      });
+      log("system", `【${p.hero.name}】下诏【勤王诏】`);
+      render();
+      return true;
+    }
+    // 3. 粮（血少时）
+    if(p.hp < p.maxHp){
+      idx = p.hand.findIndex(c=>c.type==="liang");
+      if(idx>=0 && p.hp<=p.maxHp-1){
+        const card = p.hand.splice(idx,1)[0];
+        G.discard.push(card);
+        p.hp = Math.min(p.maxHp, p.hp+1);
+        log("heal", `【${p.hero.name}】使用【粮】，回复1点体力`);
+        render();
+        return true;
+      }
+    }
+    // 4. 装备
+    idx = p.hand.findIndex(c=>c.kind==="equip");
+    if(idx>=0){
+      const card = p.hand.splice(idx,1)[0];
+      equipCard(p, card);
+      log("system", `【${p.hero.name}】装备了【${card.name}】`);
+      render();
+      return true;
+    }
+    // 4b. 战场牌装备
+    idx = p.hand.findIndex(c=>c.kind==="battlefield");
+    if(idx>=0 && !p.equip.bf){
+      const card = p.hand.splice(idx,1)[0];
+      equipCard(p, card);
+      log("system", `【${p.hero.name}】据守【${card.name}】`);
+      render();
+      return true;
+    }
+    // 4c. 和议
+    idx = p.hand.findIndex(c=>c.type==="heyi");
+    if(idx>=0){
+      const card = p.hand.splice(idx,1)[0];
+      G.discard.push(card);
+      G.players.forEach(pl=>{
+        if(pl.dead) return;
+        if(pl.hand.length>0){ const c=pl.hand.pop(); G.discard.push(c); }
+        pl.hand.push(...drawCards(1));
+      });
+      log("system", `【${p.hero.name}】使用【和议】`);
+      render();
+      return true;
+    }
+    // 4d. 主战
+    idx = p.hand.findIndex(c=>c.type==="zhanzhu");
+    if(idx>=0){
+      const card = p.hand.splice(idx,1)[0];
+      G.discard.push(card);
+      const oldHand = p.hand.slice();
+      p.hand = [];
+      oldHand.forEach(c=>G.discard.push(c));
+      let n = oldHand.length;
+      const lord = G.players.find(pl=>pl.role==="lord");
+      if(p.role==="lord" || (lord && !lord.dead && p.faction===lord.faction)) n+=1;
+      p.hand.push(...drawCards(n));
+      log("system", `【${p.hero.name}】使用【主战】，弃${oldHand.length}摸${n}`);
+      render();
+      return true;
+    }
+    // 5. 火烧
+    idx = p.hand.findIndex(c=>c.type==="huoshao");
+    if(idx>=0){
+      const target = chooseTarget();
+      if(target){
+        const card = p.hand.splice(idx,1)[0];
+        G.discard.push(card);
+        log("system", `【${p.hero.name}】对【${target.pl.hero.name}】使用【火烧】`);
+        dealDamage(target.i, 2, myIdx, "fire");
+        render();
+        return true;
+      }
+    }
+    // 6. 决斗
+    idx = p.hand.findIndex(c=>c.type==="juedou");
+    if(idx>=0){
+      const target = chooseTarget();
+      if(target){
+        const card = p.hand.splice(idx,1)[0];
+        G.discard.push(card);
+        log("system", `【${p.hero.name}】对【${target.pl.hero.name}】使用【决斗】`);
+        startDuel(myIdx, target.i);
+        render();
+        return true;
+      }
+    }
+    // 7. 斩
+    let slashLimit = 1 + (p.hero.skill.extraSlash||0);
+    if(G.slashUsed < slashLimit){
+      idx = p.hand.findIndex(c=>c.type==="zhan");
+      if(idx>=0){
+        const target = chooseTarget();
+        if(target && canAttack(myIdx, target.i)){
+          const card = p.hand.splice(idx,1)[0];
+          G.discard.push(card);
+          G.slashUsed++;
+          log("system", `【${p.hero.name}】对【${target.pl.hero.name}】出【斩】`);
+          awaitSlash(target.i, myIdx, "normal");
+          render();
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  // AI 循环出牌
+  let count = 0;
+  function aiLoop(){
+    if(G.over) return;
+    if(G.waitingResponse){
+      // 等人类响应完再继续
+      setTimeout(aiLoop, 800);
+      return;
+    }
+    if(count>8){ endPlayPhase(); return; }
+    const used = useOneCard();
+    count++;
+    if(used){
+      setTimeout(aiLoop, 1100);
+    }else{
+      endPlayPhase();
+    }
+  }
+  setTimeout(aiLoop, 500);
+}
+
+/* ================================================================
+   渲染
+   ================================================================ */
+function render(){
+  if(!G) return;
+  // 顶部玩家区
+  const top = document.getElementById("game-top");
+  top.innerHTML = "";
+  G.players.forEach((p,i)=>{
+    const div = document.createElement("div");
+    div.className = "player-slot";
+    if(i===G.turnIndex) div.classList.add("active-turn");
+    if(p.dead) div.classList.add("dead");
+    if(p.isHuman) div.classList.add("is-me");
+
+    // 身份显示：主公明置，其他人根据情况（万俟卨才能看主公身份）
+    let roleHtml = "";
+    if(p.role==="lord"){
+      roleHtml = `<div class="player-role lord">主公</div>`;
+    }else if(p.isHuman){
+      roleHtml = `<div class="player-role ${p.role}">${{loyalist:"忠臣",rebel:"反贼",renegade:"内奸"}[p.role]}</div>`;
+    }else{
+      roleHtml = `<div class="player-role unknown">？</div>`;
+    }
+
+    const bfName = p.equip.bf ? {bf_yaoshan:"尧山",bf_shaanzhou:"陕州",bf_huaihe:"淮河",bf_changshe:"长社",bf_nanyang:"南阳"}[p.equip.bf] : null;
+    const equipStr = [bfName?`📍${bfName}`:null, p.equip.weapon?.name, p.equip.armor?.name, p.equip.horse?.name].filter(Boolean).join(" / ");
+    const martyrTag = p.martyrUnlocked ? `<span class="martyr-mark">死节诏</span>` : "";
+
+    div.innerHTML = `
+      <div class="player-name">${p.hero.name}${p.isHuman?"(你)":""}${martyrTag}</div>
+      <div style="font-size:11px;color:var(--gold-light);margin-bottom:2px;">${p.name?escHtml(p.name):""} ${p.hero.jun||""}</div>
+      ${roleHtml}
+      <div class="player-hp">${"●".repeat(Math.max(0,p.hp))}${"○".repeat(Math.max(0,p.maxHp-p.hp))}</div>
+      <div class="player-cards">手牌 × ${p.hand.length}</div>
+      <div class="player-equip">${equipStr||""}</div>
+    `;
+    top.appendChild(div);
+  });
+
+  // 当前回合指示
+  const cp = G.players[G.turnIndex];
+  document.getElementById("current-banner").innerHTML =
+    `当前行动：<b>${cp.hero.name}</b>${cp.isHuman?"（你）":""}`;
+
+  // 手牌区
+  const hand = document.getElementById("hand-cards");
+  const me = G.players.find(p=>p.isHuman);
+  hand.innerHTML = "";
+  if(me){
+    me.hand.forEach(card=>{
+      const div = document.createElement("div");
+      div.className = "card " + card.kind;
+      // 是否可出
+      let disabled = G.phase!=="play" || G.turnIndex!==G.players.findIndex(p=>p.isHuman);
+      if(card.type==="zhan"){
+        let slashLimit = 1 + (me.hero.skill.extraSlash||0);
+        if(G.slashUsed>=slashLimit) disabled = true;
+      }
+      if(me.discardPending && me.discardPending>0){
+        disabled = false; // 弃牌模式都可点
+      }
+      if(disabled) div.classList.add("disabled");
+
+      div.innerHTML = `
+        <div class="card-name">${card.name}</div>
+        <div class="card-type">${{basic:"基本牌",snake:"锦囊",equip:"装备",battlefield:"战场牌"}[card.kind]}</div>
+        <div class="card-desc">${card.desc}</div>
+      `;
+      div.onclick = ()=>{
+        if(me.discardPending && me.discardPending>0){
+          if(!isHost && onlineMode){
+            sendAction({type:"discardCard", cardUid:card.uid});
+            return;
+          }
+          const idx = me.hand.findIndex(c=>c.uid===card.uid);
+          if(idx>=0){
+            const c = me.hand.splice(idx,1)[0];
+            G.discard.push(c);
+            me.discardPending--;
+            log("me", `你弃了【${c.name}】`);
+            if(me.discardPending<=0){
+              me.discardPending = 0;
+              nextTurn();
+            }
+            render();
+          }
+          return;
+        }
+        // 联机客户端：发消息给房主
+        if(!isHost && onlineMode){
+          sendAction({type:"playCard", cardUid:card.uid});
+          return;
+        }
+        playCard(card.uid);
+      };
+      hand.appendChild(div);
+    });
+  }
+
+  // 操作按钮
+  const bar = document.getElementById("action-bar");
+  bar.innerHTML = "";
+  if(me && !me.dead && G.phase==="play" && G.turnIndex===G.players.findIndex(p=>p.isHuman)){
+    // 死节限定技
+    if(me.martyrUnlocked && !G.martyrUsed){
+      const btnM = document.createElement("button");
+      btnM.className = "btn-action";
+      btnM.style.borderColor = "#9e4a4a";
+      btnM.style.color = "#d47a7a";
+      btnM.textContent = "【死节诏】弃牌爆发";
+      btnM.onclick = ()=>{
+        G.martyrUsed = true;
+        // 弃所有牌
+        me.hand.forEach(c=>G.discard.push(c));
+        me.hand = [];
+        // 宋军摸2牌
+        G.players.forEach(pl=>{
+          if(!pl.dead && pl.faction==="song"){
+            pl.hand.push(...drawCards(2));
+          }
+        });
+        G.slashUsed = -99; // 本回合出斩不限次
+        log("me", "【死节诏】！忠臣血未冷——你弃所有牌，宋军各摸2牌，本回合出斩不限次！");
+        render();
+      };
+      bar.appendChild(btnM);
+    }
+    const btn = document.createElement("button");
+    btn.className = "btn-action primary";
+    btn.textContent = "结束出牌阶段";
+    btn.onclick = ()=>{
+      if(!isHost && onlineMode){
+        sendAction({type:"endTurn"});
+        return;
+      }
+      endPlayPhase();
+    };
+    bar.appendChild(btn);
+  }
+}
+
+/* ================================================================
+   联机对战（PeerJS P2P）
+   ================================================================ */
+let peer = null;
+let isHost = false;
+let hostConn = null;
+let guestConns = [];
+let guestNames = [];        // 客户端昵称列表
+let mySeat = 0;
+let onlineMode = false;
+let myName = "玩家";
+
+function showLobby(kind){
+  if(typeof Peer==="undefined"){
+    alert("联网组件加载失败，请检查网络后刷新页面");
+    return;
+  }
+  document.getElementById("lobby-create").style.display = kind==="create"?"block":"none";
+  document.getElementById("lobby-join").style.display = kind==="join"?"block":"none";
+  showScreen("screen-lobby");
+  if(kind==="create") createRoom();
+}
+
+function backHome(){
+  if(peer) try{peer.destroy();}catch(e){}
+  peer = null; isHost=false; hostConn=null; guestConns=[];
+  showScreen("screen-home");
+}
+
+function createRoom(){
+  myName = document.getElementById("host-name-input").value.trim() || "玩家";
+  const code = Math.random().toString(36).slice(2,8).toUpperCase();
+  const roomId = "shaosong-" + code;
+  document.getElementById("room-code-display").textContent = code;
+  isHost = true; onlineMode = true;
+  guestConns = []; guestNames = [];
+  peer = new Peer(roomId);
+  peer.on("open", id=>renderLobbyPlayers());
+  peer.on("connection", conn=>{
+    conn.on("open", ()=>{
+      conn.on("data", data=>{
+        if(data.type==="hello"){
+          const idx = guestConns.indexOf(conn);
+          if(idx>=0) guestNames[idx] = data.name || "无名氏";
+          renderLobbyPlayers();
+          broadcastLobby();
+        }else{
+          handleGuestData(conn, data);
+        }
+      });
+      guestConns.push(conn);
+      guestNames.push("...");
+      renderLobbyPlayers();
+    });
+    conn.on("close", ()=>{
+      const idx = guestConns.indexOf(conn);
+      if(idx>=0){ guestConns.splice(idx,1); guestNames.splice(idx,1); }
+      broadcastLobby();
+    });
+  });
+  peer.on("error", err=>{
+    alert("房间创建失败："+err.type);
+  });
+}
+
+function renderLobbyPlayers(){
+  const div = document.getElementById("lobby-players");
+  let html = `<div style="padding:6px;background:var(--panel);border-radius:4px;">🟡 <b>${escHtml(myName)}</b>（房主）</div>`;
+  guestNames.forEach((n,i)=>{
+    html += `<div style="padding:6px;background:var(--panel);border-radius:4px;">🟢 ${escHtml(n)}</div>`;
+  });
+  div.innerHTML = html;
+}
+
+function escHtml(s){
+  return String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+}
+
+function broadcastLobby(){
+  renderLobbyPlayers();
+  guestConns.forEach((c,i)=>c.send({type:"lobby", count:guestConns.length+1, names:[myName,...guestNames]}));
+}
+
+function joinRoom(){
+  myName = document.getElementById("guest-name-input").value.trim() || "无名氏";
+  const code = document.getElementById("room-code-input").value.trim().toUpperCase();
+  if(!code){alert("请输入房间号");return;}
+  isHost = false; onlineMode = true;
+  peer = new Peer();
+  peer.on("open", ()=>{
+    hostConn = peer.connect("shaosong-"+code);
+    hostConn.on("open", ()=>{
+      hostConn.send({type:"hello", name:myName});
+      document.getElementById("join-status").textContent = "已连接，等待房主开战...";
+      hostConn.on("data", data=>handleHostData(data));
+    });
+    hostConn.on("close", ()=>{
+      document.getElementById("join-status").textContent = "与房主断开连接";
+    });
+  });
+  peer.on("error", err=>{
+    document.getElementById("join-status").textContent = "连接失败："+err.type;
+  });
+}
+
+/* 房主开始游戏 */
+function hostStartGame(){
+  const numPlayers = guestConns.length + 1; // 房主 + 客户端
+  if(numPlayers < 2){alert("至少需要2人开战");return;}
+  // 复用单人开局逻辑，但玩家数=numPlayers，少于4人的用AI补
+  onlineMode = true;
+  startOnlineGame(numPlayers);
+}
+
+function startOnlineGame(numReal){
+  // 房主是玩家0（真人），1..numReal-1是客户端真人，其余AI
+  const myHero = HEROES[Math.floor(Math.random()*HEROES.length)];
+  const aiNeeded = 4 - numReal;
+  const allHeroes = shuffle(HEROES.filter(h=>h.id!==myHero.id));
+  const roles = shuffle(["loyalist","rebel","renegade"]);
+  G = newGameState();
+  G.players = [];
+  // 玩家0：房主（真人）
+  const p0 = makePlayer(myHero, "lord", true);
+  p0.name = myName;
+  G.players.push(p0);
+  // 玩家1..numReal-1：客户端真人
+  for(let i=0;i<numReal-1;i++){
+    const p = makePlayer(allHeroes[i], roles[i], true);
+    p.name = guestNames[i] || ("玩家"+(i+2));
+    G.players.push(p);
+  }
+  // 剩余：AI
+  for(let i=numReal-1;i<3;i++){
+    G.players.push(makePlayer(allHeroes[i], roles[i]||"rebel", false));
+  }
+  G.deck = shuffle(CARD_POOL.map((c,i)=>({...c, uid:i+"_"+Math.random().toString(36).slice(2)})));
+  G.players.forEach(p=>p.hand = drawCards(4));
+  // 给每个客户端发座位号和身份（只有自己能看到）
+  guestConns.forEach((c,i)=>{
+    c.send({type:"start", seat:i+1});
+  });
+  document.getElementById("battlefield-banner").innerHTML =
+    `<span class="bf-name">联机对战</span><span class="bf-desc"> — ${numReal}人真人 + ${aiNeeded}AI</span>`;
+  showScreen("screen-game");
+  log("system", "—— 多人对战开幕 ——");
+  G.turnIndex = 0;
+  startTurn();
+}
+
+/* 客户端收到房主消息 */
+function handleHostData(data){
+  if(data.type==="lobby"){
+    // 等待
+  }else if(data.type==="start"){
+    mySeat = data.seat;
+    onlineMode = true;
+    showScreen("screen-game");
+  }else if(data.type==="state"){
+    G = data.state;
+    // 客户端：把自己座位设为isHuman，其他人不是
+    G.players.forEach((p,i)=>{
+      p.isHuman = (i===mySeat);
+    });
+    render();
+  }else if(data.type==="prompt"){
+    handleClientPrompt(data);
+  }
+}
+
+/* 客户端主动发操作给房主 */
+function sendAction(action){
+  if(hostConn && hostConn.open()){
+    hostConn.send({type:"action", seat:mySeat, action:action});
+  }
+}
+
+function handleGuestData(conn, data){
+  if(data.type==="action"){
+    // 房主收到客户端操作
+    const seat = data.seat;
+    const p = G.players[seat];
+    if(!p || p.dead) return;
+    if(data.action.type==="playCard"){
+      // 临时把回合切到该玩家，复用playCard
+      const savedTurn = G.turnIndex;
+      G.turnIndex = seat;
+      playCard(data.action.cardUid);
+      G.turnIndex = savedTurn;
+    }else if(data.action.type==="endTurn"){
+      if(G.turnIndex===seat) endPlayPhase();
+    }else if(data.action.type==="discardCard"){
+      const idx = p.hand.findIndex(c=>c.uid===data.action.cardUid);
+      if(idx>=0){
+        const c = p.hand.splice(idx,1)[0];
+        G.discard.push(c);
+        if(p.discardPending) p.discardPending--;
+        if(p.discardPending<=0){ p.discardPending=0; nextTurn(); }
+      }
+    }else if(data.action.type==="respondSlash"){
+      // 客户端响应斩（出避/不避）
+      if(data.action.playHan){
+        const idx = p.hand.findIndex(c=>c.type==="han" || (p.hero.skill.useAs && p.hero.skill.useAs.han));
+        if(idx>=0){
+          const card = p.hand.splice(idx,1)[0];
+          G.discard.push(card);
+          log("me", `${p.hero.name}打出了【避】`);
+        }
+      }
+      // 触发后续（简化：直接结算伤害由房主的awaitSlash处理）
+    }
+  }
+}
+
+function handleOnlineAction(data){
+  // 兼容旧入口
+  handleGuestData(null, data);
+}
+
+/* 房主广播状态：对每个客户端脱敏手牌 */
+function broadcastState(){
+  guestConns.forEach((c, i)=>{
+    const seat = i+1;
+    const safe = JSON.parse(JSON.stringify(G, (k,v)=>{
+      if(k==="deck") return undefined;
+      return v;
+    }));
+    // 脱敏：其他玩家的手牌只发数量，不发内容
+    safe.players.forEach((p,idx)=>{
+      if(idx!==seat){
+        const count = p.hand ? p.hand.length : 0;
+        p.hand = Array(count).fill({back:true, name:"背面", kind:"basic"});
+      }
+    });
+    // 发牌堆数量
+    safe.deckCount = G.deck.length;
+    c.send({type:"state", state:safe});
+  });
+}
+
+// 重写render后自动广播（房主）
+const _origRender = render;
+render = function(){
+  _origRender();
+  if(isHost && onlineMode && G){
+    broadcastState();
+  }
+};
+
+/* ================================================================
+   启动
+   ================================================================ */
+</script>
+</body>
+</html>
