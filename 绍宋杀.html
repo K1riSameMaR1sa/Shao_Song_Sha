@@ -22,6 +22,10 @@
   --jin-light:#d47a7a;
   --neutral:#7a7a6a;    /* 内奸灰 */
   --neutral-light:#b0b0a0;
+  --xixia:#8a6a3a;      /* 西夏棕黄（牧场马场） */
+  --xixia-light:#d4a86a;
+  --dali:#5a8a5a;       /* 大理青绿（佛国巫蛊） */
+  --dali-light:#9ad49a;
   --lord:#c9a961;       /* 主公金 */
   --hp-red:#c0392b;
   --hp-green:#27ae60;
@@ -90,6 +94,8 @@ body::before{
 .hero-card.song{border-top:4px solid var(--song);}
 .hero-card.jin{border-top:4px solid var(--jin);}
 .hero-card.neutral{border-top:4px solid var(--neutral);}
+.hero-card.xixia{border-top:4px solid var(--xixia);}
+.hero-card.dali{border-top:4px solid var(--dali);}
 .hero-card.lord{border:2px solid var(--gold);box-shadow:0 0 12px rgba(201,169,97,.3);}
 .hero-card.selected{border-color:var(--gold);background:#4a3e2a;}
 .hero-name{font-size:18px;font-weight:bold;color:var(--ink);margin-bottom:4px;}
@@ -276,6 +282,9 @@ body::before{
     <p>· <b>死节诏</b>：忠臣殉国后主公解锁限定技——弃所有牌，宋军各摸2牌、本回合出斩不限次。</p>
     <p>· <b>五军联动</b>：同阵营有其他存活武将时，手牌上限+1（固定不叠加）；同袍阵亡时其他同袍摸1牌继承遗志。</p>
     <p>· <b>先知</b>：赵玖每回合窥看下家一张手牌。</p>
+    <p style="margin-top:10px;"><b>四方势力</b>：</p>
+    <p>· <b style="color:var(--xixia-light)">西夏</b>：铁鹞子（装备战马伤害+1、距离+1）、河西马场（自动装备战马）。</p>
+    <p>· <b style="color:var(--dali-light)">大理</b>：佛国（每回合回血、免疫火烧）、巫蛊（诅咒他人出斩伤害-1）、茶马古道（用粮额外摸牌）。</p>
     <p style="margin-top:10px;"><b>玩法</b>：基本牌 <b>斩 / 避 / 粮</b>，锦囊与装备各有妙用。轮到你时摸两张牌，出牌阶段可用牌攻击他人、使用锦囊、装备武器防具。血量为零且无人出粮救回即死亡。</p>
   </div>
   <div style="margin-bottom:20px;color:var(--dim);font-size:14px;letter-spacing:2px;">同座热座对战人数：</div>
@@ -422,6 +431,24 @@ const HEROES = [
   {id:"wanqixie", name:"万俟卨", title:"殿中侍御史", hp:3, faction:"neutral", jun:"文臣",
    skill:{name:"揣摩", desc:"你始终可以看到主公的身份牌。",
      seeLord:true}},
+  // 西夏（马场、铁鹞子、西夏文）
+  {id:"lichage", name:"李察哥", title:"西夏晋王 · 铁鹞子统帅", hp:5, faction:"xixia", jun:"铁鹞子",
+   skill:{name:"铁鹞子", desc:"装备战马后，你的攻击距离+1，出【斩】伤害+1。",
+     heavyCavalry:true}},
+  {id:"rendejing", name:"任得敬", title:"西夏权臣 · 河西马场监", hp:4, faction:"xixia", jun:"马场",
+   skill:{name:"河西马场", desc:"出牌阶段限一次，可将一张手牌当【战马】装备。",
+     onceAsHorse:true},
+   skill2:{name:"西夏文", desc:"每局限一次，可抵消任意一张锦囊牌的效果。",
+     oncePierce:true}},
+  // 大理（佛国、巫蛊、段氏）
+  {id:"duanheyu", name:"段和誉", title:"大理宣宗 · 佛国世子", hp:4, faction:"dali", jun:"段氏",
+   skill:{name:"佛国", desc:"每回合开始时回1点体力；你不能被【火烧】指定。",
+     buddha:true}},
+  {id:"gaoliangcheng", name:"高量成", title:"大理相国 · 乌蛮族长", hp:3, faction:"dali", jun:"高氏",
+   skill:{name:"巫蛊", desc:"出牌阶段限一次，弃一张牌令一名玩家下回合出【斩】伤害-1。",
+     witchcraft:true},
+   skill2:{name:"茶马古道", desc:"你每使用一张【粮】，可额外摸一张牌。",
+     teaHorse:true}},
 ];
 
 /* ================================================================
@@ -620,6 +647,7 @@ function makePlayer(hero, role, isHuman){
     equip: {weapon:null, armor:null, horse:null, bf:null},
     dead: false,
     martyrUnlocked: false,  // 死节限定技是否解锁
+    witchcraftUsed: false,  // 巫蛊本回合是否已用
     counters: {
       armorUsed: false,
       counterSlashUsed: false,
@@ -731,6 +759,8 @@ function attackRange(playerIdx){
   let r = 1;
   const p = G.players[playerIdx];
   if(p.equip.weapon) r += 2;
+  // 铁鹞子（李察哥）：装备战马时距离+1
+  if(p.hero.skill.heavyCavalry && p.equip.horse) r += 1;
   return r;
 }
 
@@ -763,6 +793,7 @@ function startTurn(){
   p.counters.bfReduceUsed = false;
   p.counters.huaiheUsed = false;
   p.counters.changsheUsed = false;
+  p.witchcraftUsed = false;
 
   // ===== 个人装备的战场牌效果 =====
   // 陕州：每回合开始摸1张
@@ -774,6 +805,16 @@ function startTurn(){
   if(p.equip.bf==="bf_nanyang" && p.hp>0 && p.hp<p.maxHp){
     p.hp = Math.min(p.maxHp, p.hp+1);
     log("heal", `【南阳地利】${p.hero.name}回复1点体力`);
+  }
+  // 佛国（段和誉）：每回合回1血
+  if(p.hero.skill.buddha && p.hp>0 && p.hp<p.maxHp){
+    p.hp = Math.min(p.maxHp, p.hp+1);
+    log("heal", `【佛国】${p.hero.name}礼佛回复1点体力`);
+  }
+  // 河西马场（任得敬）：每回合开始自动装备战马（若空着）
+  if(p.hero.skill2 && p.hero.skill2.onceAsHorse && !p.equip.horse){
+    p.equip.horse = {type:"zhanma", name:"战马", kind:"equip", auto:true};
+    log("system", `【河西马场】${p.hero.name}的战马披挂上阵`);
   }
 
   // 赵玖"先知"技能：看下家一张手牌
@@ -874,6 +915,22 @@ function playCard(cardUid){
     equipCard(p, card);
     p.hand.splice(idx,1);
     log("me", `你据守【${card.name}】，获得地利`);
+    render();
+    return;
+  }
+  // 粮：回血
+  if(card.type==="liang"){
+    p.hand.splice(idx,1);
+    G.discard.push(card);
+    if(p.hp<p.maxHp){
+      p.hp++;
+      log("heal", `【${p.hero.name}】使用【粮】，回复1点体力`);
+    }
+    // 茶马古道（高量成）：用粮额外摸1牌
+    if(p.hero.skill2 && p.hero.skill2.teaHorse){
+      p.hand.push(...drawCards(1));
+      log("me", "【茶马古道】你额外摸1张牌");
+    }
     render();
     return;
   }
@@ -1173,6 +1230,12 @@ function dealDamage(targetIdx, n, sourceIdx, kind){
     render();
     return;
   }
+  // 佛国（段和誉）：免疫火烧
+  if(target.hero.skill.buddha && kind==="fire"){
+    log("system", `【佛国】${target.hero.name}佛光普照，免疫【火烧】`);
+    render();
+    return;
+  }
   // 个人战场牌：淮河受斩可弃牌抵消
   if(target.equip.bf==="bf_huaihe" && kind==="normal" && !target.counters.huaiheUsed && target.hand.length>0){
     // AI自动弃牌抵消；人类提示
@@ -1188,6 +1251,17 @@ function dealDamage(targetIdx, n, sourceIdx, kind){
   // 个人战场牌：尧山——攻击者出斩伤害+1
   if(sourceIdx>=0 && G.players[sourceIdx].equip.bf==="bf_yaoshan" && kind==="normal"){
     n += 1;
+  }
+  // 铁鹞子（李察哥）：装备战马时出斩伤害+1
+  if(sourceIdx>=0 && G.players[sourceIdx].hero.skill.heavyCavalry && G.players[sourceIdx].equip.horse && kind==="normal"){
+    n += 1;
+    log("system", `【铁鹞子】${G.players[sourceIdx].hero.name}铁骑破阵，伤害+1`);
+  }
+  // 巫蛊诅咒：被诅咒者出斩伤害-1
+  if(sourceIdx>=0 && G.players[sourceIdx].counters.witchCursed && kind==="normal"){
+    n = Math.max(0, n-1);
+    G.players[sourceIdx].counters.witchCursed = false;
+    log("system", `【巫蛊】${G.players[sourceIdx].hero.name}被诅咒，出斩伤害-1`);
   }
   // 个人战场牌：尧山——受首次斩伤害-1
   if(target.equip.bf==="bf_yaoshan" && kind==="normal" && !target.counters.bfReduceUsed){
@@ -1734,6 +1808,44 @@ function render(){
         render();
       };
       bar.appendChild(btnM);
+    }
+    // 巫蛊（高量成）：出牌阶段限一次，弃1牌令一名玩家下回合出斩伤害-1
+    if(me.hero.skill.witchcraft && !me.witchcraftUsed && me.hand.length>0){
+      const btnW = document.createElement("button");
+      btnW.className = "btn-action";
+      btnW.style.borderColor = "var(--dali)";
+      btnW.style.color = "var(--dali-light)";
+      btnW.textContent = "【巫蛊】弃牌诅咒";
+      btnW.onclick = ()=>{
+        // 选目标
+        const overlay = document.createElement("div");
+        overlay.className = "target-prompt";
+        overlay.innerHTML = `<p>选择被巫蛊诅咒的玩家（下回合出【斩】伤害-1）：</p>`;
+        G.players.forEach((pl,i)=>{
+          if(pl.dead || i===G.turnIndex) return;
+          const b = document.createElement("button");
+          b.className = "btn btn-sm";
+          b.textContent = pl.hero.name;
+          b.onclick = ()=>{
+            document.body.removeChild(overlay);
+            // 弃一张牌
+            const c = me.hand.pop();
+            G.discard.push(c);
+            pl.counters.witchCursed = true;
+            me.witchcraftUsed = true;
+            log("me", `你发动【巫蛊】，弃【${c.name}】，诅咒了${pl.hero.name}——其下回合出斩伤害-1`);
+            render();
+          };
+          overlay.appendChild(b);
+        });
+        const cancel = document.createElement("button");
+        cancel.className = "btn btn-sm";
+        cancel.textContent = "取消";
+        cancel.onclick = ()=>document.body.removeChild(overlay);
+        overlay.appendChild(cancel);
+        document.body.appendChild(overlay);
+      };
+      bar.appendChild(btnW);
     }
     const btn = document.createElement("button");
     btn.className = "btn-action primary";
